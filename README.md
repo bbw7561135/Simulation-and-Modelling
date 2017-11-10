@@ -1,8 +1,13 @@
 # agents
+## bird_flock
+WIP: Simulates bird's flocking by minimising a utility function to allow the birds to
+change heading and velocity.
 ## conway_game_of_life
 Creates an animation of Conway's Game of Life. Currently there are only two
 masks to use in the grid. More will eventually be implemented when I have
 the time to do it.
+## traffic flow
+WIP: Simulates the flow of traffic on a multiple-lane road.
 
 # molecular-dynamics
 ## co_molecule
