@@ -6,7 +6,7 @@ change heading and velocity.
 Creates an animation of Conway's Game of Life. Currently there are only two
 masks to use in the grid. More will eventually be implemented when I have
 the time to do it.
-## traffic flow
+## traffic_flow
 WIP: Simulates the flow of traffic on a multiple-lane road.
 
 # molecular-dynamics
