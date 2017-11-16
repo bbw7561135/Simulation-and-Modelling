@@ -1,7 +1,8 @@
 # agents
 ## bird_flock
-WIP: Simulates bird's flocking by minimising a utility function to allow the birds to
-change heading and velocity.
+Simulates bird's flocking together. The code achieves this by minimising the
+negative of a utility function to compute a new heading and velocity for a 
+bird due to the flockmates it can see.
 ## conway_game_of_life
 Creates an animation of Conway's Game of Life. Currently there are only two
 masks to use in the grid. More will eventually be implemented when I have
