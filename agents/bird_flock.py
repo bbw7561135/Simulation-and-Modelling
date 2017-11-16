@@ -1,5 +1,5 @@
 # =============================================================================
-# Simulation of a flock of birds using Cellular Automato techniques
+# Simulation of a flock of birds
 # =============================================================================
 
 from __future__ import division
@@ -8,11 +8,10 @@ from copy import deepcopy
 import numpy as np
 from scipy.optimize import minimize_scalar
 from matplotlib import pyplot as plt
-from matplotlib import animation
 from matplotlib import rcParams
 rcParams['font.family'] = 'serif'
 rcParams['font.size'] = 16
-rcParams['figure.figsize'] = (12, 6)
+rcParams['figure.figsize'] = (24, 12)
 
 
 class Agent(object):
@@ -127,7 +126,7 @@ class Flock(object):
             # change the boid's heading due to the neighbours and compute
             # a timestep
             boid.steer(boid_neighbours)
-            boid.step
+            boid.step(dt)
 
     def locations(self):
         for i, boid in enumerate(self._agents):
@@ -151,3 +150,57 @@ class Flock(object):
         sep = self._flockmate_locations - self.average_location()
 
         return np.mean(np.linalg.norm(sep, axis=1))
+
+# =============================================================================
+# Simulation Parameters and Time Steps
+# =============================================================================
+
+n_boids = 25
+boid_locations = 5 * np.random.rand(n_boids, 2)
+boid_velocities = np.ones_like(boid_locations) + 0.01 * \
+    np.random.rand(n_boids, 2)
+
+# define the flock
+flock = Flock(boid_locations, boid_velocities)
+
+# define simulation parameters
+n_steps = 5000
+dt = 0.001
+
+# create arrays to store things
+locations = np.zeros((n_steps, n_boids, 2))
+average_width = np.zeros(n_steps)
+time_steps = np.zeros(n_steps)
+
+# set the first entries
+locations[0, :, :] = flock.locations()
+average_width[0] = flock.average_width()
+
+# update the positions
+for step in range(1, n_steps):
+    flock.step(dt)
+    locations[step, :, :] = deepcopy(flock.locations())
+    average_width[step] = deepcopy(flock.average_width())
+    time_steps[step] = time_steps[step - 1] + dt
+
+# =============================================================================
+# Plot the flock
+# =============================================================================
+
+fig = plt.figure()
+
+ax1 = fig.add_subplot(121)
+ax1.plot(locations[0, :, 0], locations[0, :, 1], '*', label='Initial position')
+ax1.plot(locations[:, :, 0], locations[:, :, 1], label='Boids')
+ax1.set_xlabel('x')
+ax1.set_ylabel('y')
+ax1.set_title('Flock locations')
+
+ax2 = fig.add_subplot(122)
+ax2.plot(time_steps, average_width)
+ax2.set_xlabel('Time, t')
+ax2.set_ylabel('Average Width')
+ax2.set_title('Average width of the flock')
+
+plt.savefig('boid_simulation.pdf')
+plt.show()
