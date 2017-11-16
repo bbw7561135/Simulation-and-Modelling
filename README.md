@@ -9,6 +9,10 @@ the time to do it.
 ## traffic_flow
 WIP: Simulates the flow of traffic on a multiple-lane road.
 
+# finite-elements
+## 1d-finite-element-solver
+WIP: Computes the temperature of a 1D system using finite element methods.
+
 # molecular-dynamics
 ## co_molecule
 Simulates the interactions of the atoms in a CO molecule using the Morse and the
