@@ -23,7 +23,7 @@ rcParams['figure.figsize'] = (12, 6)
 
 def f_function(x):
     """
-    The function to compute the local force matrix.
+    The function used when computing the local force matrix.
     """
     return x * x
 
@@ -64,7 +64,7 @@ def finite_element(interval, N_Elements):
     x = np.linspace(interval[0], interval[1], N_Elements + 1)
 
     # set up location matrix
-    LM = np.zeros((2, N_Elements))
+    LM = np.zeros((2, N_Elements), dtype=np.int)
     for e in range(N_Elements):
         LM[0, e] = e      # left hand node
         LM[1, e] = e+1    # right hand node
@@ -84,9 +84,9 @@ def finite_element(interval, N_Elements):
         kab = local_stiffness(x[element:element + 2])
         fab = local_force(x[element:element + 2])
         for a in range(2):
-            A = int(LM[a, element])
+            A = LM[a, element]
             for b in range(2):
-                B = int(LM[b, element])
+                B = LM[b, element]
                 if (A >= 0) and (B >= 0):
                     K_global[A, B] += kab[a, b]
             if (A >= 0):
