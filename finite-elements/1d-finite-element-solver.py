@@ -100,6 +100,7 @@ def finite_element(interval, N_Elements):
 
     return x, T
 
+
 # =============================================================================
 # Plot the results
 # =============================================================================
@@ -113,8 +114,8 @@ T_exact = (1 - x_exact ** 4)/12
 # plot the exact solution against the finite element solution
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
-ax1.plot(x_exact, T_exact, '--', label='Exact solution')
 ax1.plot(nodes, T, label='Finite element solution')
+ax1.plot(x_exact, T_exact, '--', label='Exact solution')
 ax1.set_xlim(0, 1)
 ax1.set_ylim(0)
 ax1.set_xlabel('$x$')
