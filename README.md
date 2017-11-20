@@ -19,7 +19,7 @@ WIP: Simulates the flow of traffic on a multiple-lane road.
 
 # finite-elements
 ## 1d-finite-element-solver
-WIP: Computes the temperature of a 1D system using finite element methods.
+Computes the temperature of a 1D system using finite element methods.
 
 # molecular-dynamics
 ## co_molecule
