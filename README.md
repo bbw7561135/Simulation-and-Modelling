@@ -17,9 +17,17 @@ of 50 randomly placed boids.
 ## traffic_flow
 WIP: Simulates the flow of traffic on a multiple-lane road.
 
+# assignment-notebooks
+## Coursework 01 MC
+The submitted Jupyter notebook for the Monte Carlo coursework.
+## Coursework 01 MD
+The submitted Jupter notebook for the Molecular Dynamics coursework.
+
 # finite-elements
 ## 1d-finite-element-solver
 Computes the temperature of a 1D system using finite element methods.
+## 2d-finite-element-solver
+WIP: Computes the temperature of a 2D system using finite element methods.
 
 # molecular-dynamics
 ## co_molecule
