@@ -351,6 +351,11 @@ def flock_evolution(locations, velocities, n_steps, dt, C=1):
     # define simulation parameters, which is just the number of boids here
     n_boids = len(locations)
 
+    # in the function evolve_flock_and_plot, these paramters are already
+    # checked so this is mostly redundant and inefficent in that case, but if
+    # this function is being called by itself, it's worthwhile keeping these
+    # paramter checks in the function
+
     if n_boids == 0:
         raise ValueError('No boids in the flock :-(')
     assert(type(n_steps) == int), 'n_steps has to be an integer.'
@@ -501,7 +506,7 @@ def random_flock(n_boids):
     return boid_locations, boid_velocities
 
 
-def evolve_flock(locations, velocities, n_steps, dt, C):
+def evolve_flock_and_plot(locations, velocities, n_steps, dt, C):
     """
     Simulates and then plots a flock of 50 random boids. The locations and
     velocities of the boids is returned so they can be used for comparisons.
@@ -533,6 +538,10 @@ def evolve_flock(locations, velocities, n_steps, dt, C):
     if dt <= 0:
             raise ValueError('The timestep must be greater than zero.')
 
+    # there should be as many coordinates as velocities
+    assert(len(locations) == len(velocities)), \
+        'The dimensions of the locations and velocity arrays are different'
+
     # call the function to evolve a flock
     flock_locations, flock_width, t = flock_evolution(locations,
                                                       velocities,
@@ -559,7 +568,7 @@ if __name__ == "__main__":
     C = train_flock()  # find the optimum value of c where the variance of the
     # flock width the minimum for c in the range [0.1, 10]
     random_loc, random_vel = random_flock(50)  # generate a random flock
-    evolve_flock(random_loc, random_vel, 200, 0.05, C)  # evolve a flock
+    evolve_flock_and_plot(random_loc, random_vel, 200, 0.05, C)
     stop = timeit.default_timer()  # end run timer
 
     print('Run time: {:6.2f} seconds.'.format(stop - start))
