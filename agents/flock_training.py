@@ -1,10 +1,14 @@
 # =============================================================================
-# Simulation of a flock of birds
+# Simulation of a flock of boids where the cohesion parameter of the boids
+# is studied in detail.
 # =============================================================================
 
+import timeit
+import pytest
 import numpy as np
 from copy import deepcopy
 from scipy.optimize import minimize_scalar
+from numba import jit
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
 rcParams['font.family'] = 'serif'
@@ -12,12 +16,26 @@ rcParams['font.size'] = 16
 rcParams['figure.figsize'] = (24, 12)
 
 
+# =============================================================================
+# Boid & Flock Classes
+# =============================================================================
+
 class Boid(object):
     """
-    Description of the class.
+    Constructs a boid which contains the boid's location and velocity.
+    Functions in the class evolve's the boid's location and steer the boid
+    due to the influence of it's neighbours.
+
+    Class functions
+    ---------------
+    _step: Evolves the boid's location by a timestep dt using the Euler
+        stepping method.
+    s+teer: Steers the heading of a boid by taking into account the influence
+        of it's neighbours on a utilty function.
+
     """
 
-    def __init__(self, location, velocity, C, A=5, S=0.25):
+    def __init__(self, location, velocity, C=1, A=5, S=0.25):
         """
         Creates an object boid which contains the coordinates and velocities
         for a boid. The Boid object also contains the utility function which
@@ -38,14 +56,17 @@ class Boid(object):
             how much a boid will steer to avoid crowding in the flock.
         """
 
+        # the coordinates of the boid
         self._coords = np.array(location, dtype=np.float64)
+        # the velocity of the boids
         self._vel = np.array(velocity, dtype=np.float64)
+        # the utility function to calculate the heading of the boids
         self._cost = (lambda theta, theta_z, theta_v, theta_zmin, delta_zmin:
                       - (C * np.cos(theta - theta_z) +
                          A * np.cos(theta - theta_v) -
                          S * np.cos(theta-theta_zmin)/delta_zmin ** 2))
 
-    def step(self, dt):
+    def _step(self, dt):
         """
         Compute a timestep for a boid to update it's position using the Euler
         stepping method.
@@ -55,9 +76,12 @@ class Boid(object):
         dt: float. The size of the timestep.
         """
 
+        if dt <= 0:
+            raise ValueError('The timestep must be greater than zero.')
+
         self._coords += dt * self._vel
 
-    def steer(self, neighbours):
+    def _steer_boid(self, neighbours):
         """
         Compute a boid's new velocity due to the influence of the boid's
         neighbours in its immediate area.
@@ -115,10 +139,21 @@ class Boid(object):
 
 class Flock(object):
     """
-    Description of the class.
+    Constructs a flock of boids and provides functions to return data about the
+    flock as well as a function to evolve the flock.
+
+    Class functions
+    ---------------
+    _step: Computes a timestep for a flock by looking at each boid and
+        finding it's neighbours.
+    locations: Creates an array containing the locations of the all of the
+        boids in a flock.
+    _flock_average_location: Computes the centre of a flock by looking at the
+        location of all the boids in a flock.
+    _flock_width: Computes the average width of the entire flock.
     """
 
-    def __init__(self, locations, velocities, C=1, rl=1):
+    def __init__(self, locations, velocities, C=1, A=5, S=1, rl=1):
         """
         Create a Flock object containing the location and velocities of the
         boids making up a flock.
@@ -135,14 +170,20 @@ class Flock(object):
             be affected by it's neighbouring boids.
         """
 
+        if rl <= 0:
+            raise ValueError('Boids are (hopfully) not blind, nor do they \
+                             have a negative looking radius.')
+
         self._flockmate_locations = np.array(locations, dtype=np.float64)
         self._flockmate_velocities = np.array(velocities, dtype=np.float64)
-        self._rl = rl  # rl is the looking radius
-        self._boids = []
+        self._rl = rl  # rl is the looking radius, i.e. how far a boid can see
+        self._boids = []  # list contaning all the boids in the flock
         for location, velocity, in zip(locations, velocities):
             self._boids.append(Boid(location, velocity, C))
 
-    def step(self, dt):
+        assert(len(self._boids) > 0), 'No boids in the flock :-('
+
+    def _step(self, dt):
         """
         Compute a timestep where each agent will have it's velocity and
         location updated due to the influence of it's neighbours.
@@ -171,27 +212,19 @@ class Flock(object):
                     if dist < self._rl:
                         boid_neighbours.append(another_boid)
 
+            assert(len(boid_neighbours) <= len(current_boids)), \
+                'A boid has more neighbours than there are boids in total.'
+
             # change the boid's heading due to the neighbours and compute
             # a timestep
-            boid.steer(boid_neighbours)
-            boid.step(dt)
+            boid._steer_boid(boid_neighbours)
+            boid._step(dt)  # dt input value is tested in _step function
 
-    def locations(self):
-        """
-        Create an array of all the locations of the boids in the flock. This
-        function requires there to be a list of boids defined in the flock.
+            # now update the positions of the boid in the locations array
+            for i, boid in enumerate(self._boids):
+                self._flockmate_locations[i, :] = boid._coords
 
-        Returns
-        -------
-        An array containing all of the locations for each boid in the flock.
-        """
-
-        for i, boid in enumerate(self._boids):
-            self._flockmate_locations[i, :] = boid._coords
-
-        return self._flockmate_locations
-
-    def average_location(self):
+    def _flock_average_location(self):
         """
         Compute the centre of the flock by calculating the average location
         of all the boids in a flock. Requires there to be a list of all
@@ -205,7 +238,7 @@ class Flock(object):
 
         return np.mean(self._flockmate_locations, axis=0)
 
-    def average_width(self):
+    def _flock_width(self):
         """
         Compute the width of the flock by taking the average of the distance
         each boid is from the (average) centre of the flock.
@@ -215,12 +248,16 @@ class Flock(object):
         A float value for the width of the flock.
         """
 
-        sep = self._flockmate_locations - self.average_location()
+        sep = self._flockmate_locations - self._flock_average_location()
 
         return np.mean(np.linalg.norm(sep, axis=1))
 
 
-def train_flock(C, locations, velocities):
+# =============================================================================
+# Evolution & Plotting Functions
+# =============================================================================
+
+def training(C, locations, velocities):
     """
     Trains a small flock to find the best cohesion parameter, i.e. the best
     value of C to minimise the variance in the width of the flock.
@@ -238,34 +275,53 @@ def train_flock(C, locations, velocities):
     variance: float. The variance of the width of the flock (the width as a
         function of time).
     """
-    # create the flock
-    flock = Flock(locations, velocities, C)
 
     # define simulation parameters
     n_boids = len(locations)
     n_steps = 50
     dt = 0.1
 
+    if n_boids == 0:
+        raise ValueError('No boids in the flock :-(')
+    assert(type(n_steps) == int), 'n_steps has to be an integer.'
+    if n_steps <= 0:
+        raise ValueError('Number of timesteps has to be greater than zero.')
+    if dt <= 0:
+            raise ValueError('The timestep must be greater than zero.')
+
+    # there should be as many coordinates as velocities
+    assert(len(locations) == len(velocities)), \
+        'The dimensions of the locations and velocity arrays are different'
+
+    # create the flock
+    flock = Flock(locations, velocities, C)
+
     # create arrays to store things
     locations = np.zeros((n_steps, n_boids, 2))
     average_width = np.zeros(n_steps)
 
     # set the first entries
-    locations[0, :, :] = flock.locations()
-    average_width[0] = flock.average_width()
+    average_width[0] = flock._flock_width()
 
     # evolve the flock
     for step in range(1, n_steps):
-        flock.step(dt)
-        locations[step, :, :] = flock.locations()
-        average_width[step] = flock.average_width()
+        flock._step(dt)  # call the Flock stepping function
+        average_width[step] = flock._flock_width()
 
     variance = np.var(average_width)
+
+    # check to make sure the variance is sensible
+    if variance < 0:
+        raise ValueError('Negative variance: doesn\'t make sense.')
+    elif variance == 0:
+        raise ValueError('Zero variance: the boids are moving, as such there \
+                         should be some variance in the width of the flock, \
+                         unless none of the boids can see one another.')
 
     return variance
 
 
-def evolve_flock(locations, velocities, n_steps, dt, C=1):
+def flock_evolution(locations, velocities, n_steps, dt, C=1):
     """
     Create a flock of boids and evolve it in time using the Euler stepping
     method to update it's position.
@@ -292,11 +348,23 @@ def evolve_flock(locations, velocities, n_steps, dt, C=1):
         steps.
     """
 
+    # define simulation parameters, which is just the number of boids here
+    n_boids = len(locations)
+
+    if n_boids == 0:
+        raise ValueError('No boids in the flock :-(')
+    assert(type(n_steps) == int), 'n_steps has to be an integer.'
+    if n_steps <= 0:
+        raise ValueError('Number of timesteps has to be greater than zero.')
+    if dt <= 0:
+            raise ValueError('The timestep must be greater than zero.')
+
+    # there should be as many coordinates as velocities
+    assert(len(locations) == len(velocities)), \
+        'The dimensions of the locations and velocity arrays are different'
+
     # create the flock
     flock = Flock(locations, velocities, C)
-
-    # define simulation parameters
-    n_boids = len(locations)
 
     # create arrays to store things
     locations = np.zeros((n_steps, n_boids, 2))
@@ -304,14 +372,14 @@ def evolve_flock(locations, velocities, n_steps, dt, C=1):
     time_steps = np.zeros(n_steps)
 
     # set the first entries
-    locations[0, :, :] = flock.locations()
-    width[0] = flock.average_width()
+    locations[0, :, :] = flock._flockmate_locations
+    width[0] = flock._flock_width()
 
     # evolve the flock
     for step in range(1, n_steps):
-        flock.step(dt)
-        locations[step, :, :] = flock.locations()
-        width[step] = flock.average_width()
+        flock._step(dt)  # call the Flock stepping function
+        locations[step, :, :] = flock._flockmate_locations
+        width[step] = flock._flock_width()
         time_steps[step] = time_steps[step - 1] + dt
 
     return locations, width, time_steps
@@ -339,7 +407,16 @@ def plot_flock(x, width, t, extra_filename=''):
     the working directory.
     """
 
+    assert(len(x) == len(t)), \
+        'The size of the locations array has to be the same as the number of \
+            time steps.'
+    assert(len(width) == len(t)), \
+        'The size of the width array has to be the same as the number of \
+            time steps.'
+
     fig = plt.figure()
+
+    fig.suptitle('{} Flock'.format(extra_filename))
 
     ax1 = fig.add_subplot(121)
     ax1.plot(x[0, :, 0], x[0, :, 1], 'k*', label='Initial positions')
@@ -353,40 +430,136 @@ def plot_flock(x, width, t, extra_filename=''):
     ax2.plot(t, width)
     ax2.set_xlabel('Time, $t$')
     ax2.set_ylabel('Average Width')
+    ax2.set_xlim(t[0], t[-1])
     ax2.set_title('Width of the flock')
 
-    plt.savefig('flock_locations_width{}.pdf'.format(extra_filename))
+    plt.savefig('flock_locations_width_{}.pdf'.format(extra_filename))
     plt.show()
 
 
 # =============================================================================
-# Simulation Parameters & Train the Boids
+# Simulation Functions
 # =============================================================================
 
-# create the 4 training boids
-boid_locations = np.array([[0.75, 0.75], [0.25, 0.25], [0.75, 0.25],
-                           [0.25, 0.75]])
-boid_velocities = np.ones_like(boid_locations)
+def train_flock():
+    """
+    Constructs a flock of boids at pre-determined locations and evolves the
+    flock by minimising the training_flock function. This function thus trains
+    the boids and returns the value of C where the variance of the flock
+    width wrt to time is the smallest. C is in the range [0.1, 10].
 
-# use minimize_scalar to minimize the output (the variance of the average
-# distance) of the training fuction
-min_c = minimize_scalar(train_flock, bounds=(0.1, 10),
-                        args=(boid_locations, boid_velocities),
-                        method='bounded')
+    Returns
+    --------
+    min_c.x: float. Returns the value computed in the minimize_scalar function,
+        i.e. it returns the optimum value of C.
+    """
+
+    # create the 4 training boids
+    boid_locations = np.array([[0.75, 0.75], [0.25, 0.25], [0.75, 0.25],
+                               [0.25, 0.75]])
+    boid_velocities = np.ones_like(boid_locations)
+
+    # use minimize_scalar to minimize the output (the variance of the average
+    # distance) of the training fuction
+    min_c = minimize_scalar(training, bounds=(0.1, 10),
+                            args=(boid_locations, boid_velocities),
+                            method='bounded')
+
+    return min_c.x
+
+
+def random_flock(n_boids):
+    """
+    Generates a random flock of boids.
+
+    Note: I'm going to make the assumption that the np.random.rand is not
+    going to generate the same random number twice, so I will not be checking
+    for duplicate positions
+
+    Parameters
+    ----------
+    n_boids: integer. The number of boids to be in the flock.
+
+    Returns
+    -------
+    boid_locations: n_boids x 2 array. An array containing a random x and y
+        coordinates for n_boids.
+    boid_velocities: n_boids x 2 array. An array containing a random velocity
+        x and y component for n_boids.
+    """
+
+    assert(type(n_boids) == int), 'The number of boids has to be an integer.'
+    if n_boids == 0:
+        raise ValueError('No boids in the flock :-(')
+    elif n_boids < 0:
+        raise ValueError('A negative amount of boids is nonsensical.')
+
+    boid_locations = 5 * np.random.rand(n_boids, 2)
+    boid_velocities = np.ones_like(boid_locations) + 0.01 * \
+        np.random.rand(n_boids, 2)
+
+    return boid_locations, boid_velocities
+
+
+def evolve_flock(locations, velocities, n_steps, dt, C):
+    """
+    Simulates and then plots a flock of 50 random boids. The locations and
+    velocities of the boids is returned so they can be used for comparisons.
+
+    Parameters
+    ----------
+    locations: n_boids x 2 array. The x and y locations of the boids in the
+        flock, where n_boids is the number of boids.
+    velocities: n_boids x 2 array. The x and y velocities of the boids in the
+        flock, where n_boids is the number of boids.
+    n_steps: interger. The number of steps to evolve the flock for.
+    dt: float. The size timestep for each n_step.
+    C: The Cohesion parameter.
+
+    Returns
+    -------
+    Returns a plot of the flock locations and the width of the flock.
+    """
+
+    # get the size of the locations array to check if there are any boids
+    n_boids = len(locations)
+
+    # check that the simulation parameters make sense
+    if n_boids == 0:
+        raise ValueError('No boids in the flock :-(')
+    assert(type(n_steps) == int), 'n_steps has to be an integer.'
+    if n_steps <= 0:
+        raise ValueError('Number of timesteps has to be greater than zero.')
+    if dt <= 0:
+            raise ValueError('The timestep must be greater than zero.')
+
+    # call the function to evolve a flock
+    flock_locations, flock_width, t = flock_evolution(locations,
+                                                      velocities,
+                                                      n_steps, dt, C)
+    # plot the flock using the function
+    plot_flock(flock_locations, flock_width, t, 'Trained')
+
+    print('Value of cohesion parameter, C: {}.'.format(C))
+
 
 # =============================================================================
-# Apply the training to 50 random boids
+# Run the functions and etc
 # =============================================================================
 
-n_boids = 50  # create 50 random boid locations and velocities
-boid_locations = 5 * np.random.rand(n_boids, 2)
-boid_velocities = np.ones_like(boid_locations) + 0.01 * \
-    np.random.rand(n_boids, 2)
+# only runs a flock simulation if the interpreter is running the file as the
+# main program. This helps with testing using pytest so the code doesn't run
+# multiple times when imported to the testing script
 
-# call the function to create and evolve a flock
-flock_locations, flock_width, t = evolve_flock(boid_locations, boid_velocities,
-                                               200, 0.05, min_c.x)
+if __name__ == "__main__":
+    # call pytest in quiet mode, should only make a noise if a test fails
+    pytest.main(['-qq'])
 
-# plot the flock and print the value of C used
-plot_flock(flock_locations, flock_width, t, '_trained')
-print('Optimum cohension value for minimum variance: {}.'.format(min_c.x))
+    start = timeit.default_timer()  # start  run timer
+    C = train_flock()  # find the optimum value of c where the variance of the
+    # flock width the minimum for c in the range [0.1, 10]
+    random_loc, random_vel = random_flock(50)  # generate a random flock
+    evolve_flock(random_loc, random_vel, 200, 0.05, C)  # evolve a flock
+    stop = timeit.default_timer()  # end run timer
+
+    print('Run time: {:6.2f} seconds.'.format(stop - start))
