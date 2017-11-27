@@ -14,6 +14,8 @@ a utility function. The optimum value of C is found by training a flock of 4
 boids. The variance in the average width of the flock is then minimised by
 finding the optimum value of C. This value of C is then used to simulate a flock
 of 50 randomly placed boids.
+## test_flock_training
+Pytest style unit tests for the functions in flock_training.
 ## traffic_flow
 WIP: Simulates the flow of traffic on a multiple-lane road.
 
@@ -27,7 +29,7 @@ The submitted Jupter notebook for the Molecular Dynamics coursework.
 ## 1d-finite-element-solver
 Computes the temperature of a 1D system using finite element methods.
 ## 2d-finite-element-solver
-WIP: Computes the temperature of a 2D system using finite element methods.
+Computes the temperature of a 2D system using finite element methods.
 
 # molecular-dynamics
 ## co_molecule
