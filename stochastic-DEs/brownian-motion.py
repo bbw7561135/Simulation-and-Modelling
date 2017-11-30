@@ -56,20 +56,23 @@ for N in Ns:
         u_mean = np.mean(u, axis=0)
 
         # ax1.plot(t, u.T, alpha=0.1)
-        ax1.plot(t, u_mean, label='Random Walk N = {}, M = {}'.format(N, M))
+        ax1.plot(t, u_mean, '--', label='N = {}, M = {}'.format(N, M))
         # ax2.plot(t, myU.T, alpha=0.1)
-        ax2.plot(t, myU_mean, label='Random Walk N = {}, M = {}'.format(N, M))
+        ax2.plot(t, myU_mean, '--', label='N = {}, M = {}'.format(N, M))
 
 ax1.plot(t_int, int_exact, 'k-', label='Exact Solution')
 ax1.set_xlim(0.005, np.pi)
 ax1.set_ylim(0, 1)
+ax1.legend(bbox_to_anchor=(0, 1.02, 1, 0.102), loc=3,
+           ncol=2, mode="expand", borderaxespad=1.5)
 ax1.set_title('Ed')
-ax1.legend()
+
 
 ax2.plot(t_int, int_exact, 'k-', label='Exact Solution')
 ax2.set_xlim(0.005, np.pi)
 ax2.set_ylim(0, 1)
+ax2.legend(bbox_to_anchor=(0, 1.02, 1, 0.102), loc=3,
+           ncol=2, mode="expand", borderaxespad=1.5)
 ax2.set_title('Alex')
-ax2.legend()
 
 plt.show()
