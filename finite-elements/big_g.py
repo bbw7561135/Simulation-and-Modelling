@@ -147,6 +147,9 @@ def shape_function(xi):
         coordinates (xi, eta).
     """
 
+    if len(xi) != 2:
+        raise ValueError('Only two reference coordinates should be provided.')
+
     N = np.array([[1 - xi[1] - xi[0]], [xi[0]], [xi[1]]])
 
     return N
@@ -189,6 +192,12 @@ def local_to_global(nodes, xi):
     mesh.
 
     """
+
+    if len(xi) != 2:
+        raise ValueError('Only two reference coordinates should be provided.')
+    assert(nodes.shape == (3, 2)), \
+        'nodes needs to be an array of shape (3, 2).'
+
     N = shape_function(xi)
 
     x = nodes[0, 0] * N[0] + nodes[1, 0] * N[1] + nodes[2, 0] * N[2]
@@ -218,6 +227,11 @@ def jacobian(nodes, xi):
         derivatives, at the global location of an element.
     """
 
+    if len(xi) != 2:
+        raise ValueError('Only two reference coordinates should be provided.')
+    assert(nodes.shape == (3, 2)), \
+        'nodes needs to be an array of shape (3, 2).'
+
     dN = shape_function_dN()    # calculate the derivatives of the shape funcs
     J = np.dot(dN.T, nodes)     # costruct the Jacobian matrix
 
@@ -243,6 +257,11 @@ def det_jacobian(nodes, xi):
     nodes and reference coordiante (xi, eta).
     """
 
+    if len(xi) != 2:
+        raise ValueError('Only two reference coordinates should be provided.')
+    assert(nodes.shape == (3, 2)), \
+        'nodes needs to be an array of shape (3, 2).'
+
     return np.abs(np.linalg.det(jacobian(nodes, xi)))
 
 
@@ -265,10 +284,15 @@ def global_dN(nodes, xi):
         locations (xi, eta).
     """
 
+    if len(xi) != 2:
+        raise ValueError('Only two reference coordinates should be provided.')
+    assert(nodes.shape == (3, 2)), \
+        'nodes needs to be an array of shape (3, 2).'
+
     # create the local derivs and the Jacobian matrix
     dN = shape_function_dN()
     J = jacobian(nodes, xi)
-    global_dN = np.zeros((3, 2))
+    global_dN = np.zeros_like(dN)
 
     # solve the linear equation global_dN * J = dN
     for i in range(3):
@@ -325,6 +349,9 @@ def element_quad(phi, nodes):
     quad: float. The volume of the element given by the Gauss quadrature.
     """
 
+    assert(nodes.shape == (3, 2)), \
+        'nodes needs to be an array of shape (3, 2).'
+
     def psi(xi):
         return det_jacobian(nodes, xi) * phi(local_to_global(nodes, xi),
                                              shape_function(xi),
@@ -355,6 +382,9 @@ def local_stiffness(nodes):
     k_ab: n_dim + 1 x n_dim + 1 array of floats. The local stiffness matrix for
         an element, where n_dim is the number of dimensions of the element.
     """
+
+    assert(nodes.shape == (3, 2)), \
+        'nodes needs to be an array of shape (3, 2).'
 
     N_eq = nodes.shape[1] + 1  # N_eq = number of dimensions + 1
     k_ab = np.zeros((N_eq, N_eq))
@@ -393,6 +423,9 @@ def local_force(nodes, heat_source):
     f_b: 1 x n_dim + 1 array of floats. The local force vector for an element,
         where n_dim is the number of dimensions of the element.
     """
+
+    assert(nodes.shape == (3, 2)), \
+        'nodes needs to be an array of shape (3, 2).'
 
     N_eq = nodes.shape[1] + 1  # N_eq = number of dimensions + 1
     f_b = np.zeros(N_eq)
@@ -444,6 +477,14 @@ def finite_element_2d(nodes, IEN, ID, heat_source):
         node, where nodes is the number of nodes.
     """
 
+    assert(ID.shape[0] == nodes.shape[0]), 'The ID array has incorrect \
+        dimensions, it should have as many elements as there are nodes.'
+    assert(nodes.shape[1] == 2), \
+        'nodes needs to be an array of 2 columns for the x and y coordinates.'
+    assert(IEN.shape[1] == 3), \
+        'Each element has 3 node numbers associated to it, hence there should \
+        be 3 columns per element.'
+
     # get the number of the equations, elements and nodes
     n_eq = np.max(ID) + 1
     n_e = IEN.shape[0]
@@ -464,7 +505,7 @@ def finite_element_2d(nodes, IEN, ID, heat_source):
         # calculate the local stiffness and force for each element
         k_ab = local_stiffness(nodes[IEN[e, :], :])
         f_b = local_force(nodes[IEN[e, :], :], heat_source)
-        # loop over the reference nodes
+        # loop over the reference coords
         for a in range(n_dim + 1):
             A = LM[a, e]
             for b in range(n_dim + 1):
@@ -519,6 +560,9 @@ def plot_temperature_triplot(nodes, IEN, tri_size, T, cmap='hot'):
     triangular element.
     """
 
+    assert(nodes.shape[1] == 2), \
+        'The nodes array is in the wrong format. It should be n_nodes x n_dims'
+
     plt.tripcolor(nodes[:, 0], nodes[:, 1], T, triangles=IEN, cmap=cmap)
     colourbar = plt.colorbar()
     colourbar.set_label(r'Temperature, $T$', labelpad=25, rotation=270)
@@ -551,6 +595,9 @@ def plot_temperature_tri_surf(nodes, IEN, tri_size, T):
     temperature_tri_surf={} where {} is the length of the short side of the
     triangular element.
     """
+
+    assert(nodes.shape[1] == 2), \
+        'The nodes array is in the wrong format. It should be n_nodes x n_dims'
 
     fig = plt.figure()
 
