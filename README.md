@@ -31,7 +31,7 @@ Computes the temperature of a 1D system using finite element methods.
 ## 2d-finite-element-solver
 Computes the temperature of a 2D system using finite element methods given the
 node locations, IEN and ID arrays for a mesh and heat source function.
-# big_g
+## big_g
 An application of 2d-finite-element-solver to solve for the temperature of a
 g shaped grid. The boundary conditions of the grid set the right side of the
 grid to a fixed temperature of T = 0. At all other boundaries, the normal
@@ -80,6 +80,6 @@ An application of the Metropolis-Hasting algorithm to calculate the ground
 state energy of particles in a box.
 
 # stochastic-DEs
-# brownian-motion
+## brownian-motion
 Evaluates a function with a Brownian noise term over N different paths and M
 different realisations, where N, M = [500, 1000, 2000].
