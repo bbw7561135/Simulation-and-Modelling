@@ -208,7 +208,7 @@ def local_to_global(nodes, xi):
     return global_coords
 
 
-def jacobian(nodes, xi):
+def jacobian(nodes):
     """
     Compute the Jacobian matrix of an element with a global location defined
     by nodes and reference locations defined by the reference coordinates
@@ -218,8 +218,6 @@ def jacobian(nodes, xi):
     ----------
     nodes: 3 x 2 array of floats. The global locations of the nodes of the
         triangular element.
-    xi: 1 x 2 array of floats. The reference coordinates of an element
-        (xi, eta).
 
     Returns
     -------
@@ -227,8 +225,6 @@ def jacobian(nodes, xi):
         derivatives, at the global location of an element.
     """
 
-    if len(xi) != 2:
-        raise ValueError('Only two reference coordinates should be provided.')
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
@@ -262,7 +258,7 @@ def det_jacobian(nodes, xi):
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
-    return np.abs(np.linalg.det(jacobian(nodes, xi)))
+    return np.abs(np.linalg.det(jacobian(nodes)))
 
 
 def global_dN(nodes, xi):
@@ -291,7 +287,7 @@ def global_dN(nodes, xi):
 
     # create the local derivs and the Jacobian matrix
     dN = shape_function_dN()
-    J = jacobian(nodes, xi)
+    J = jacobian(nodes)
     global_dN = np.zeros_like(dN)
 
     # solve the linear equation global_dN * J = dN
@@ -569,7 +565,7 @@ def plot_temperature_triplot(nodes, IEN, tri_size, T, cmap='hot'):
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
     plt.axis('equal')
-    plt.savefig('temperature_tri_size={:2.1f}.pdf'.format(tri_size))
+    plt.savefig('temperature_tri_size={:4.3f}.pdf'.format(tri_size))
     plt.show()
 
 
@@ -608,7 +604,7 @@ def plot_temperature_tri_surf(nodes, IEN, tri_size, T):
     ax1.set_zlabel(r'Temperature, $T$')
     ax1.view_init(elev=30, azim=40)
 
-    plt.savefig('temperature_tri_surf={:2.1f}.pdf'.format(tri_size))
+    plt.savefig('temperature_tri_surf={:4.3f}.pdf'.format(tri_size))
     plt.show()
 
 
