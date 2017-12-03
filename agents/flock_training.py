@@ -44,16 +44,21 @@ class Boid(object):
 
         Parameters
         ----------
-        location: 1x2 array. The 2D location of the boid.
-        velocity: 1x2. The 2D velocity of the boid.
-        C: float. The cohesion parameter of the utilty function used to steer
+        location: 1x2 array of floats.
+            The 2D location of the boid.
+        velocity: 1 x 2 array of floats.
+            The 2D velocity of the boid.
+        C: float.
+            The cohesion parameter of the utilty function used to steer
             a boid. The cohesion controls how much a boid will steer towards
             the average location of a flock.
-        A: float. The alignment parameter of the utility function used to
-            steer a boid. The alignment controls how much a boid will steer
-            towards the average heading of the flock.
-        S: float. The separation parameter. The separation parameter controls
-            how much a boid will steer to avoid crowding in the flock.
+        A: float.
+            The alignment parameter of the utility function used to steer a
+            boid. The alignment controls how much a boid will steer towards
+            the average heading of the flock.
+        S: float.
+            The separation parameter. The separation parameter controls how
+            much a boid will steer to avoid crowding in the flock.
         """
 
         # the coordinates of the boid
@@ -73,7 +78,8 @@ class Boid(object):
 
         Parameters
         ----------
-        dt: float. The size of the timestep.
+        dt: float.
+            The size of the timestep.
         """
 
         if dt <= 0:
@@ -88,8 +94,9 @@ class Boid(object):
 
         Parameters
         ----------
-        neighbours: 1xN array. N is the number of neighbours, where the
-            neighbours in the array should be Boid objects.
+        neighbours: 1xN array of floats.
+            N is the number of neighbours, where the neighbours in the array
+            should be Boid objects.
         """
 
         N = len(neighbours)
@@ -160,19 +167,25 @@ class Flock(object):
 
         Parameters
         ----------
-        locations: N x 2 array. An array containing all of the (x, y) locations
-            of each boid. N is the number of boids in the flock.
-        velocities: N x 2 array. An array containing all of the (Vx, Vy)
-            velocities of each boid. N is the number of boids in the flock.
-        C: float. The Cohesion parameter which controls how much a boid will
-            steer towards the center of mass of a flock.
-        A: float. The alignment parameter of the utility function used to
-            steer a boid. The alignment controls how much a boid will steer
-            towards the average heading of the flock.
-        S: float. The separation parameter. The separation parameter controls
-            how much a boid will steer to avoid crowding in the flock.
-        rl: float. The looking radius of a boid, i.e. how far it can see and
-            be affected by it's neighbouring boids.
+        locations: N x 2 array of floats.
+            An array containing all of the (x, y) locations of each boid. N is
+            the number of boids in the flock.
+        velocities: N x 2 array of floats.
+            An array containing all of the (Vx, Vy) velocities of each boid.
+            N is the number of boids in the flock.
+        C: float.
+            The Cohesion parameter which controls how much a boid will steer
+            towards the center of mass of a flock.
+        A: float.
+            The alignment parameter of the utility function used to steer a
+            boid. The alignment controls how much a boid will steer towards the
+            average heading of the flock.
+        S: float.
+            The separation parameter. The separation parameter controls how
+            much a boid will steer to avoid crowding in the flock.
+        rl: float.
+            The looking radius of a boid, i.e. how far it can see and be
+            affected by it's neighbouring boids.
         """
 
         if rl <= 0:
@@ -195,7 +208,8 @@ class Flock(object):
 
         Parameters
         ----------
-        dt: float. The length of a time step to update a boid's position.
+        dt: float.
+            The length of a time step to update a boid's position.
         """
 
         if dt <= 0:
@@ -241,8 +255,8 @@ class Flock(object):
 
         Returns
         -------
-        A 1 x 2 array cointaing the coordinates for the centre of the flock,
-        using the average location of the boids.
+        A 1 x 2 array of floats cointaing the coordinates for the centre of the
+        flock, using the average location of the boids.
         """
 
         return np.mean(self._flockmate_locations, axis=0)
@@ -274,18 +288,22 @@ def training(C, locations, velocities, n_steps, dt):
 
     Parameters
     ----------
-    C: float. The cohesion parameter to optimise.
-    locations: N x 2 array. The coordinate locations of the boids which are
-        to be in the flock.
-    velocities: N x 2 array. The velocity components of the boids which are
-        to be in the flock.
-    n_steps: integer. The number of steps to take to evolve the flock.
-    dt: float. The length of the timestep for each step.
+    C: float.
+        The cohesion parameter to optimise.
+    locations: N x 2 array of floats.
+        The coordinate locations of the boids which are to be in the flock.
+    velocities: N x 2 array of floats.
+        The velocity components of the boids which are to be in the flock.
+    n_steps: integer.
+        The number of steps to take to evolve the flock.
+    dt: float.
+        The length of the timestep for each step.
 
     Returns
     -------
-    variance: float. The variance of the width of the flock (the width as a
-        function of time).
+    variance: float.
+        The variance of the width of the flock (the width as a function of
+        time).
     """
 
     # define simulation parameters
@@ -338,24 +356,29 @@ def flock_evolution(locations, velocities, n_steps, dt, C=1):
 
     Parameters
     ----------
-    locations: N x 2 array. The coordinate locations of the boids which are
-        to be in the flock. N corresponds to the number of boids in the flock.
-    velocities: N x 2 array. The velocity components of the boids which are
-        to be in the flock. N corresponds to the number of boids in the flock.
-    n_steps: integer. The number of steps to take to evolve the flock.
-    dt: float. The length of the timestep for each step.
-    C: float. The cohesion parameter for the flock. This controls how much a
-        boid will want to steer towards the centre of the flock.
+    locations: N x 2 array of floats.
+        The coordinate locations of the boids which are to be in the flock.
+        N corresponds to the number of boids in the flock.
+    velocities: N x 2 array of floats.
+        The velocity components of the boids which are to be in the flock.
+        N corresponds to the number of boids in the flock.
+    n_steps: integer.
+        The number of steps to take to evolve the flock.
+    dt: float.
+        The length of the timestep for each step.
+    C: float.
+        The cohesion parameter for the flock. This controls how much a boid
+        will want to steer towards the centre of the flock.
 
     Returns
     -------
-    locations: n_steps x N x 2 array. The coordinate locations of the boids
-        which have been evolved. N corresponds to the number of boids in the
-        flock.
-    average_width: n_steps x 1 array. The average width of the flock at each
-        time step.
-    time_steps: n_steps x 1 array. The corresponding value of time at the time
-        steps.
+    locations: n_steps x N x 2 array of floats.
+        The coordinate locations of the boids which have been evolved. N
+        corresponds to the number of boids in the flock.
+    average_width: n_steps x 1 array of floats.
+        The average width of the flock at each time step.
+    time_steps: n_steps x 1 array of floats.
+        The corresponding value of time at the time steps.
     """
 
     # define simulation parameters, which is just the number of boids here
@@ -407,12 +430,15 @@ def plot_flock(x, width, t, extra_filename=''):
 
     Parameters
     ----------
-    x: n_steps x N x 2 array. The locations of each boid in the flock at each
-        time step, n_steps.
-    width: n_steps x 1 array. The width of the flock at each time step, n_step.
-    t: n_steps x 1 array. The value of time at each time step, n_step.
-    extra_filename: string. Useful when plotting different things, but want to
-        save the figure with a different name.
+    x: n_steps x N x 2 array of floats.
+        The locations of each boid in the flock at each time step, n_steps.
+    width: n_steps x 1 array of floats.
+        The width of the flock at each time step, n_step.
+    t: n_steps x 1 array of floats.
+        The value of time at each time step, n_step.
+    extra_filename: string.
+        Useful when plotting different things, but want to save the figure
+        with a different name.
 
     Returns
     -------
@@ -466,8 +492,9 @@ def train_flock(locations, velocities, n_steps, dt):
 
     Returns
     --------
-    min_c.x: float. Returns the value computed in the minimize_scalar function,
-        i.e. it returns the optimum value of C.
+    min_c.x: float.
+        Returns the value computed in the minimize_scalar function, i.e. it
+        returns the optimum value of C.
     """
 
     # get the size of the locations array to check if there are any boids
@@ -502,13 +529,18 @@ def evolve_flock_and_plot(locations, velocities, n_steps, dt, C, plot_name=''):
 
     Parameters
     ----------
-    locations: n_boids x 2 array. The x and y locations of the boids in the
-        flock, where n_boids is the number of boids.
-    velocities: n_boids x 2 array. The x and y velocities of the boids in the
-        flock, where n_boids is the number of boids.
-    n_steps: interger. The number of steps to evolve the flock for.
-    dt: float. The size timestep for each n_step.
-    C: The Cohesion parameter.
+    locations: n_boids x 2 array of floats.
+        The x and y locations of the boids in the flock, where n_boids is the
+        number of boids.
+    velocities: n_boids x 2 array of floats.
+        The x and y velocities of the boids in the flock, where n_boids is the
+        number of boids.
+    n_steps: integer.
+        The number of steps to evolve the flock for.
+    dt: float.
+        The size timestep for each n_step.
+    C: float.
+        The Cohesion parameter.
 
     Returns
     -------
@@ -551,10 +583,10 @@ def training_boids():
 
     Returns
     -------
-    boid_locations: n_boids x 2 array. An array containing a random x and y
-        coordinates for n_boids.
-    boid_velocities: n_boids x 2 array. An array containing a random velocity
-        x and y component for n_boids.
+    boid_locations: n_boids x 2 array of floats.
+        An array containing a random x and y coordinates for n_boids.
+    boid_velocities: n_boids x 2 array of floats.
+        An array containing a random velocity x and y component for n_boids.
     """
 
     # create the 4 training boids
@@ -578,14 +610,15 @@ def random_flock(n_boids):
 
     Parameters
     ----------
-    n_boids: integer. The number of boids to be in the flock.
+    n_boids: integer.
+        The number of boids to be in the flock.
 
     Returns
     -------
-    boid_locations: n_boids x 2 array. An array containing a random x and y
-        coordinates for n_boids.
-    boid_velocities: n_boids x 2 array. An array containing a random velocity
-        x and y component for n_boids.
+    boid_locations: n_boids x 2 array of floats.
+        An array containing a random x and y coordinates for n_boids.
+    boid_velocities: n_boids x 2 array of floats.
+        An array containing a random velocity x and y component for n_boids.
     """
 
     assert(type(n_boids) == int), 'The number of boids has to be an integer.'
