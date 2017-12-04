@@ -138,13 +138,14 @@ def shape_function(xi):
 
     Parameters
     ----------
-    xi: 1 x 2 array of floats. The reference coordinates of an element
-        (xi, eta).
+    xi: 1 x 2 array of floats.
+        The reference coordinates of an element (xi, eta).
 
     Returns
     -------
-    N: 3 x 1 array of floats. The value of the shape functions at the reference
-        coordinates (xi, eta).
+    N: 3 x 1 array of floats.
+        The value of the shape functions at the reference coordinates
+        (xi, eta).
     """
 
     if len(xi) != 2:
@@ -165,8 +166,9 @@ def shape_function_dN():
 
     Returns
     -------
-    dN: 1 x 3 array of ints. An array containing the values of the
-        differential at the reference coordinates (xi, eta) for an element.
+    dN: 1 x 3 array of ints.
+        An array containing the values of the differential at the reference
+        coordinates (xi, eta) for an element.
     """
 
     dN = np.array([[-1, -1], [1, 0], [0, 1]])
@@ -181,16 +183,15 @@ def local_to_global(nodes, xi):
 
     Parameters
     ----------
-    nodes: 3 x 2 array of floats. The global locations of the nodes of the
-        triangular element.
-    xi: 1 x 2 array of floats. The reference coordinates of an element
-        (xi, eta).
+    nodes: 3 x 2 array of floats.
+        The global locations of the nodes of the triangular element.
+    xi: 1 x 2 array of floats.
+        The reference coordinates of an element (xi, eta).
 
     Returns
     -------
-    global_coords: 1 x 2 array. The global coordinates of the element on the
-    mesh.
-
+    global_coords: 1 x 2 array.
+        The global coordinates of the element on the mesh.
     """
 
     if len(xi) != 2:
@@ -216,13 +217,14 @@ def jacobian(nodes):
 
     Parameters
     ----------
-    nodes: 3 x 2 array of floats. The global locations of the nodes of the
-        triangular element.
+    nodes: 3 x 2 array of floats.
+        The global locations of the nodes of the triangular element.
 
     Returns
     -------
-    J: 2x2 matrix of floats. The Jacobian matrix, i.e. the matrix of
-        derivatives, at the global location of an element.
+    J: 2x2 matrix of floats.
+        The Jacobian matrix, i.e. the matrix of derivatives, at the global
+        location of an element.
     """
 
     assert(nodes.shape == (3, 2)), \
@@ -234,7 +236,7 @@ def jacobian(nodes):
     return J
 
 
-def det_jacobian(nodes, xi):
+def det_jacobian(nodes):
     """
     Compute the deterimnant of the Jacobian matrix of an element with a
     global location defined by nodes and reference locations defined by the
@@ -242,10 +244,11 @@ def det_jacobian(nodes, xi):
 
     Parameters
     ----------
-    nodes: 3 x 2 array of floats. The global locations of the nodes of the
-        triangular element.
-    xi: 1 x 2 array of floats. The local coordinates of the  element at the
-        reference coordinates (xi, eta).
+    nodes: 3 x 2 array of floats.
+        The global locations of the nodes of the triangular element.
+    xi: 1 x 2 array of floats.
+        The local coordinates of the  element at the reference coordinates
+        (xi, eta).
 
     Returns
     -------
@@ -253,35 +256,29 @@ def det_jacobian(nodes, xi):
     nodes and reference coordiante (xi, eta).
     """
 
-    if len(xi) != 2:
-        raise ValueError('Only two reference coordinates should be provided.')
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
     return np.abs(np.linalg.det(jacobian(nodes)))
 
 
-def global_dN(nodes, xi):
+def global_dN(nodes):
     """
     Computes the deriatives of the shape functions for an element given its
     global position nodes and reference coordinates (xi, eta).
 
     Parameters
     ----------
-    nodes: 3 x 2 array of floats. The global locations of the nodes of the
-        triangular element.
-    xi: 1 x 2 array of floats. The local coordinates of the  element at the
-        reference coordinates (xi, eta).
+    nodes: 3 x 2 array of floats.
+        The global locations of the nodes of the triangular element.
 
     Returns
     -------
-    global_dN: 3 x 2 array of ints. The value of the derivatives of the shape
-        functions for an element with global location nodes and reference
-        locations (xi, eta).
+    global_dN: 3 x 2 array of ints.
+        The value of the derivatives of the shape functions for an element with
+        global location nodes and reference locations (xi, eta).
     """
 
-    if len(xi) != 2:
-        raise ValueError('Only two reference coordinates should be provided.')
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
@@ -304,16 +301,16 @@ def reference_quad(psi):
 
     Parameters
     ----------
-    psi: function, with arguments nodes, N, dN. Where nodes is the global x, y
-        locations of the element, N is the value of the shape functions at
-        the reference nodes in the element and dN is the derivitive of the
-        shape functions at the reference nodes in the element. This function
-        is used to compute the volume of an element.
+    psi: function, with argument xi.
+        This function is used to calculate the volume of the reference element.
+        It is applied at each point of the reference element, (xi, eta).
+
 
     Returns
     -------
-    reference_quad: float. The volume of the reference element given by the
-    Gauss quadrature of the reference points xi1, xi2 and xi3.
+    reference_quad: float.
+        The volume of the reference element given by the Gauss quadrature of
+        the reference points xi1, xi2 and xi3.
     """
 
     xi1 = [1/6, 1/6]
@@ -332,26 +329,27 @@ def element_quad(phi, nodes):
 
     Parameters
     ----------
-    nodes: 3 x 2 array of floats. The global locations of the nodes of the
-        triangular element.
-    phi: function, with arguments nodes, N, dN. Where nodes is the global x, y
-        locations of the element, N is the value of the shape functions at
-        the reference nodes in the element and dN is the derivitive of the
-        shape functions at the reference nodes in the element. This function
-        is used to compute the volume of an element.
+    nodes: 3 x 2 array of floats.
+        The global locations of the nodes of the triangular element.
+    phi: function, with arguments nodes, N, dN.
+        Where nodes is the global x, y locations of the element, N is the value
+        of the shape functions at the reference nodes in the element and dN is
+        the derivitive of the shape functions at the reference nodes in the
+        element. This function is used to compute the volume of an element.
 
     Returns
     -------
-    quad: float. The volume of the element given by the Gauss quadrature.
+    quad: float.
+        The volume of the element given by the Gauss quadrature.
     """
 
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
     def psi(xi):
-        return det_jacobian(nodes, xi) * phi(local_to_global(nodes, xi),
-                                             shape_function(xi),
-                                             global_dN(nodes, xi))
+        return det_jacobian(nodes) * phi(local_to_global(nodes, xi),
+                                         shape_function(xi),
+                                         global_dN(nodes))
     quad = reference_quad(psi)
 
     return quad
@@ -364,19 +362,21 @@ def local_stiffness(nodes):
 
     Parameters
     ----------
-    nodes: 3 x 2 array of floats. The global locations of the nodes of the
-        triangular element.
-    heat_source: function, requires one argument which will be a 1 x 2 array
-        containing the x, y coordinates of the node location for a reference
-        point in an element. The force function used to calculate the local
-        force vector for each element. The function should accept one argument
-        which is an array containing the global x and y coordinates for a
-        reference point of an element.
+    nodes: 3 x 2 array of floats.
+        The global locations of the nodes of the triangular element.
+    heat_source: function.
+        Requires one argument which will be a 1 x 2 array containing the x, y
+        coordinates of the node location for a reference point in an element.
+        The force function used to calculate the local force vector for each
+        element. The function should accept one argument which is an array
+        containing the global x and y coordinates for a reference point of an
+        element.
 
     Returns
     -------
-    k_ab: n_dim + 1 x n_dim + 1 array of floats. The local stiffness matrix for
-        an element, where n_dim is the number of dimensions of the element.
+    k_ab: n_dim + 1 x n_dim + 1 array of floats.
+        The local stiffness matrix for an element, where n_dim is the number of
+        dimensions of the element.
     """
 
     assert(nodes.shape == (3, 2)), \
@@ -405,19 +405,21 @@ def local_force(nodes, heat_source):
 
     Parameters
     ----------
-    nodes: 3 x 2 array of floats. The global locations of the nodes of the
-        triangular element.
-    heat_source: function, requires one argument which will be a 1 x 2 array
-        containing the x, y coordinates of the node location for a reference
-        point in an element. The force function used to calculate the local
-        force vector for each element. The function should accept one argument
-        which is an array containing the global x and y coordinates for a
-        reference point of an element.
+    nodes: 3 x 2 array of floats.
+        The global locations of the nodes of the triangular element.
+    heat_source: function.
+        Requires one argument which will be a 1 x 2 array containing the x, y
+        coordinates of the node location for a reference point in an element.
+        The force function used to calculate the local force vector for each
+        element. The function should accept one argument which is an array
+        containing the global x and y coordinates for a reference point of an
+        element.
 
     Returns
     -------
-    f_b: 1 x n_dim + 1 array of floats. The local force vector for an element,
-        where n_dim is the number of dimensions of the element.
+    f_b: 1 x n_dim + 1 array of floats.
+        The local force vector for an element, where n_dim is the number of
+        dimensions of the element.
     """
 
     assert(nodes.shape == (3, 2)), \
@@ -453,24 +455,28 @@ def finite_element_2d(nodes, IEN, ID, heat_source):
 
     Parameters
     ----------
-    nodes: N x N array of floats. An array containing the global x, y
-        cooridnates of the nodes for the element mesh.
-    IEN: n_elements x n_dim + 1 array of ints. An array containing how each
-        element in the mesh is related to the nodes.
-    ID: 1 x n_elements array of ints. An array linking the global node
-        locations to the global equation number in the global stiffness and
-        force matrices.
-    heat_source: function, requires one argument which will be a 1 x 2 array
-        containing the x, y coordinates of the node location for a reference
-        point in an element. The force function used to calculate the local
-        force vector for each element. The function should accept one argument
-        which is an array containing the global x and y coordinates for a
-        reference point of an element.
+    nodes: N x N array of floats.
+        An array containing the global x, y cooridnates of the nodes for the
+        element mesh.
+    IEN: n_elements x n_dim + 1 array of ints.
+        An array containing how each element in the mesh is related to the
+        nodes.
+    ID: 1 x n_elements array of ints.
+        An array linking the global node locations to the global equation
+        number in the global stiffness and force matrices.
+    heat_source: function.
+        Requires one argument which will be a 1 x 2 array containing the x, y
+        coordinates of the node location for a reference point in an element.
+        The force function used to calculate the local force vector for each
+        element. The function should accept one argument which is an array
+        containing the global x and y coordinates for a reference point of an
+        element.
 
     Returns
     -------
-    T: 1 x nodes array of floats. The array of temperatures at each global
-        node, where nodes is the number of nodes.
+    T: 1 x nodes array of floats.
+        The array of temperatures at each global node, where nodes is the
+        number of nodes.
     """
 
     assert(ID.shape[0] == nodes.shape[0]), 'The ID array has incorrect \
@@ -538,15 +544,20 @@ def plot_temperature_triplot(nodes, IEN, tri_size, T, cmap='hot'):
 
     Parameters
     ----------
-    nodes: N x N array of floats. An array containing the global x, y
-        cooridnates of the nodes for the element mesh.
-    IEN: n_elements x n_dim + 1 array of ints. An array containing how each
-        element in the mesh is related to the nodes.
-    tri_size: The length of the short side of the triangular elements.
-    T: 1 x nodes array of floats. The array of temperatures at each global
-        node, where nodes is the number of nodes.
-    cmap: string. The name of the desired colourmap to be used when plotting
-        the temperature. By default the colourmap is hot.
+    nodes: N x N array of floats.
+        An array containing the global x, y cooridnates of the nodes for the
+        element mesh.
+    IEN: n_elements x n_dim + 1 array of ints.
+        An array containing how each element in the mesh is related to the
+        nodes.
+    tri_size: float.
+        The length of the short side of the triangular elements.
+    T: 1 x nodes array of floats.
+        The array of temperatures at each global node, where nodes is the
+        number of nodes.
+    cmap: string.
+        The name of the desired colourmap to be used when plotting the
+        temperature. By default the colourmap is hot.
 
     Returns
     -------
@@ -576,13 +587,17 @@ def plot_temperature_tri_surf(nodes, IEN, tri_size, T):
 
     Parameters
     ----------
-    nodes: N x N array of floats. An array containing the global x, y
-        cooridnates of the nodes for the element mesh.
-    IEN: n_elements x n_dim + 1 array of ints. An array containing how each
-        element in the mesh is related to the nodes.
-    tri_size: The length of the short side of the triangular elements.
-    T: 1 x nodes array of floats. The array of temperatures at each global
-        node, where nodes is the number of nodes.
+    nodes: N x N array of floats.
+        An array containing the global x, y cooridnates of the nodes for the
+        element mesh.
+    IEN: n_elements x n_dim + 1 array of ints.
+        An array containing how each element in the mesh is related to the
+        nodes.
+    tri_size: float.
+        The length of the short side of the triangular elements.
+    T: 1 x nodes array of floats.
+        The array of temperatures at each global node, where nodes is the
+        number of nodes.
 
     Returns
     -------
@@ -618,8 +633,9 @@ def heat_source(x):
 
     Parameters
     ----------
-    x: 1 x 2 array of floats. The x, y coordinates of the global location for
-        a reference point of an element.
+    x: 1 x 2 array of floats.
+        The x, y coordinates of the global location for a reference point of an
+        element.
 
     Returns
     -------
