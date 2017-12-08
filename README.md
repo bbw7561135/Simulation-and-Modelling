@@ -23,7 +23,11 @@ WIP: Simulates the flow of traffic on a multiple-lane road.
 ## Coursework 01 MC
 The submitted Jupyter notebook for the Monte Carlo coursework.
 ## Coursework 01 MD
-The submitted Jupter notebook for the Molecular Dynamics coursework.
+The submitted Jupyter notebook for the Molecular Dynamics coursework.
+## Coursework 02 Agents
+The submitted Jupyter notebook for the agents coursework.
+## Coursework 02 Finite Elements
+The submitted Jupyter notebook for the finite Elements coursework.
 
 # finite-elements
 ## 1d-finite-element-solver
@@ -83,7 +87,7 @@ state energy of particles in a box.
 ## brownian-motion
 Evaluates a function with a Brownian noise term over N different paths and M
 different realisations, where N, M = [500, 1000, 2000].
-## EM-Mil
+## EM_Mil
 Evaluates an SDE using the Eular-Maruyama and Milstein methods. The code
 compares both solutions against the exact solution on the same plot and also
 compares the code execution time.
