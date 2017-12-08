@@ -148,8 +148,8 @@ def shape_function(xi):
         (xi, eta).
     """
 
-    if len(xi) != 2:
-        raise ValueError('Only two reference coordinates should be provided.')
+    assert(len(xi) == 2), \
+        'Only two reference coordinates should be provided.'
 
     N = np.array([[1 - xi[1] - xi[0]], [xi[0]], [xi[1]]])
 
@@ -194,8 +194,8 @@ def local_to_global(nodes, xi):
         The global coordinates of the element on the mesh.
     """
 
-    if len(xi) != 2:
-        raise ValueError('Only two reference coordinates should be provided.')
+    assert(len(xi) == 2), \
+        'Only two reference coordinates should be provided.'
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
@@ -212,8 +212,7 @@ def local_to_global(nodes, xi):
 def jacobian(nodes):
     """
     Compute the Jacobian matrix of an element with a global location defined
-    by nodes and reference locations defined by the reference coordinates
-    (xi, eta) in xi.
+    by nodes.
 
     Parameters
     ----------
@@ -230,8 +229,8 @@ def jacobian(nodes):
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
-    dN = shape_function_dN()    # calculate the derivatives of the shape funcs
-    J = np.dot(dN.T, nodes)     # costruct the Jacobian matrix
+    dN = shape_function_dN()
+    J = np.dot(dN.T, nodes)  # costruct the Jacobian matrix
 
     return J
 
@@ -239,16 +238,12 @@ def jacobian(nodes):
 def det_jacobian(nodes):
     """
     Compute the deterimnant of the Jacobian matrix of an element with a
-    global location defined by nodes and reference locations defined by the
-    reference coordinates (xi, eta) in xi.
+    global location defined by nodes.
 
     Parameters
     ----------
     nodes: 3 x 2 array of floats.
         The global locations of the nodes of the triangular element.
-    xi: 1 x 2 array of floats.
-        The local coordinates of the  element at the reference coordinates
-        (xi, eta).
 
     Returns
     -------
@@ -259,7 +254,9 @@ def det_jacobian(nodes):
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
-    return np.abs(np.linalg.det(jacobian(nodes)))
+    J = jacobian(nodes)
+
+    return np.abs(np.linalg.det(J))
 
 
 def global_dN(nodes):
@@ -282,7 +279,6 @@ def global_dN(nodes):
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
-    # create the local derivs and the Jacobian matrix
     dN = shape_function_dN()
     J = jacobian(nodes)
     global_dN = np.zeros_like(dN)
@@ -305,7 +301,6 @@ def reference_quad(psi):
         This function is used to calculate the volume of the reference element.
         It is applied at each point of the reference element, (xi, eta).
 
-
     Returns
     -------
     reference_quad: float.
@@ -313,11 +308,18 @@ def reference_quad(psi):
         the reference points xi1, xi2 and xi3.
     """
 
+    # the reference points for the quadrature will always be the same, hence
+    # define them here
     xi1 = [1/6, 1/6]
     xi2 = [4/6, 1/6]
     xi3 = [1/6, 4/6]
 
     reference_quad = (1/6) * (psi(xi1) + psi(xi2) + psi(xi3))
+
+    # this quadrature should always be a float, and not an array or etc, so
+    # check to make sure nothing weird has happened somewhere
+    assert(type(reference_quad) == float or int), \
+        'The reference quadrature is being calculated in the wrong format.'
 
     return reference_quad
 
@@ -347,9 +349,10 @@ def element_quad(phi, nodes):
         'nodes needs to be an array of shape (3, 2).'
 
     def psi(xi):
-        return det_jacobian(nodes) * phi(local_to_global(nodes, xi),
-                                         shape_function(xi),
-                                         global_dN(nodes))
+        return det_jacobian(nodes) * phi(
+            local_to_global(nodes, xi), shape_function(xi),
+            global_dN(nodes))
+
     quad = reference_quad(psi)
 
     return quad
@@ -364,13 +367,6 @@ def local_stiffness(nodes):
     ----------
     nodes: 3 x 2 array of floats.
         The global locations of the nodes of the triangular element.
-    heat_source: function.
-        Requires one argument which will be a 1 x 2 array containing the x, y
-        coordinates of the node location for a reference point in an element.
-        The force function used to calculate the local force vector for each
-        element. The function should accept one argument which is an array
-        containing the global x and y coordinates for a reference point of an
-        element.
 
     Returns
     -------
@@ -382,23 +378,23 @@ def local_stiffness(nodes):
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
-    N_eq = nodes.shape[1] + 1  # N_eq = number of dimensions + 1
+    # The number of equations is equal to the number of dimensions + 1
+    N_eq = nodes.shape[1] + 1
     k_ab = np.zeros((N_eq, N_eq))
 
     # loop over the node reference points
     for a in range(N_eq):
         for b in range(N_eq):
-            # define the vector phi
+            # define the vector phi for the element quadrature
             def phi_k(nodes, N, dN):
                 return dN[a, 0] * dN[b, 0] + dN[a, 1] * dN[b, 1]
 
-            # compute the quadrature for that element
             k_ab[a, b] = element_quad(phi_k, nodes)
 
     return k_ab
 
 
-def local_force(nodes, heat_source):
+def local_force(nodes, force_func):
     """
     Computes the local force vector of an element given the global node
     locations of the element.
@@ -407,7 +403,7 @@ def local_force(nodes, heat_source):
     ----------
     nodes: 3 x 2 array of floats.
         The global locations of the nodes of the triangular element.
-    heat_source: function.
+    force_func: function.
         Requires one argument which will be a 1 x 2 array containing the x, y
         coordinates of the node location for a reference point in an element.
         The force function used to calculate the local force vector for each
@@ -425,16 +421,16 @@ def local_force(nodes, heat_source):
     assert(nodes.shape == (3, 2)), \
         'nodes needs to be an array of shape (3, 2).'
 
-    N_eq = nodes.shape[1] + 1  # N_eq = number of dimensions + 1
+    # The number of equations is equal to the number of dimensions + 1
+    N_eq = nodes.shape[1] + 1
     f_b = np.zeros(N_eq)
 
     # loop over the b reference points
     for b in range(N_eq):
         # define the vector phi
         def phi_f(nodes, N, dN):
-            return N[b] * heat_source(nodes)
+            return N[b] * force_func(nodes)
 
-        # compute the quadrature for that element
         f_b[b] = element_quad(phi_f, nodes)
 
     return f_b
@@ -444,7 +440,7 @@ def local_force(nodes, heat_source):
 # Finite Element Algorithm
 # =============================================================================
 
-def finite_element_2d(nodes, IEN, ID, heat_source):
+def finite_element_2d(nodes, IEN, ID, force_func):
     """
     The finite element algorithm to solve for T. This function works by
     consturcting a location matrix to link elements to node. Each element then
@@ -455,7 +451,7 @@ def finite_element_2d(nodes, IEN, ID, heat_source):
 
     Parameters
     ----------
-    nodes: N x N array of floats.
+    nodes: N x 2 array of floats.
         An array containing the global x, y cooridnates of the nodes for the
         element mesh.
     IEN: n_elements x n_dim + 1 array of ints.
@@ -464,7 +460,7 @@ def finite_element_2d(nodes, IEN, ID, heat_source):
     ID: 1 x n_elements array of ints.
         An array linking the global node locations to the global equation
         number in the global stiffness and force matrices.
-    heat_source: function.
+    force_func: function.
         Requires one argument which will be a 1 x 2 array containing the x, y
         coordinates of the node location for a reference point in an element.
         The force function used to calculate the local force vector for each
@@ -483,50 +479,51 @@ def finite_element_2d(nodes, IEN, ID, heat_source):
         dimensions, it should have as many elements as there are nodes.'
     assert(nodes.shape[1] == 2), \
         'nodes needs to be an array of 2 columns for the x and y coordinates.'
+    assert(len(nodes) > 2), 'There are not enough nodes to define a triangular \
+        element.'
     assert(IEN.shape[1] == 3), \
         'Each element has 3 node numbers associated to it, hence there should \
         be 3 columns per element.'
 
     # get the number of the equations, elements and nodes
-    n_eq = np.max(ID) + 1
-    n_e = IEN.shape[0]
-    n_nodes, n_dim = nodes.shape
+    N_eq = np.max(ID) + 1
+    N_elements = IEN.shape[0]
+    N_nodes, N_dim = nodes.shape
 
     # generate the location matrix which links the node locations to an element
     LM = np.zeros_like(IEN.T)
-    for e in range(n_e):
-        for a in range(n_dim + 1):
+    for e in range(N_elements):
+        for a in range(N_dim + 1):
             LM[a, e] = ID[IEN[e, a]]
 
     # create arrays for global stiffness matrix and global force vector
-    K_global = np.zeros((n_eq, n_eq))
-    F_global = np.zeros(n_eq)
+    K_global = np.zeros((N_eq, N_eq))
+    F_global = np.zeros(N_eq)
 
-    # Loop over each element
-    for e in range(n_e):
+    for e in range(N_elements):
         # calculate the local stiffness and force for each element
         k_ab = local_stiffness(nodes[IEN[e, :], :])
-        f_b = local_force(nodes[IEN[e, :], :], heat_source)
+        f_b = local_force(nodes[IEN[e, :], :], force_func)
+
         # loop over the reference coords
-        for a in range(n_dim + 1):
+        for a in range(N_dim + 1):
             A = LM[a, e]
-            for b in range(n_dim + 1):
+            for b in range(N_dim + 1):
                 B = LM[b, e]
                 if (A >= 0) and (B >= 0):
-                    # calculate the global stiffness
                     # if A or B < 0, then the node will be ignored
                     K_global[A, B] += k_ab[a, b]
             if (A >= 0):
-                # calculate the global force
+                # if A, then the node will be ignored
                 F_global[A] += f_b[a]
 
-    # Solve the linear equation
+    # Solve the linear equation, k * T = F
     T_A = np.linalg.solve(K_global, F_global)
 
     # now construct the array to contain T at the nodes
-    T = np.zeros(n_nodes)
-    for node in range(n_nodes):
-        # if ID < 0, this node should not appear in the global temperature
+    T = np.zeros(N_nodes)
+    for node in range(N_nodes):
+        # if ID < 0, this temperature should not appear in the global array
         if ID[node] >= 0:
             T[node] = T_A[ID[node]]
 
@@ -576,7 +573,7 @@ def plot_temperature_triplot(nodes, IEN, tri_size, T, cmap='hot'):
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
     plt.axis('equal')
-    plt.savefig('temperature_tri_size={:4.3f}.pdf'.format(tri_size))
+    plt.savefig('temperature_tri_size={:2.1f}.pdf'.format(tri_size))
     plt.show()
 
 
@@ -619,7 +616,7 @@ def plot_temperature_tri_surf(nodes, IEN, tri_size, T):
     ax1.set_zlabel(r'Temperature, $T$')
     ax1.view_init(elev=30, azim=40)
 
-    plt.savefig('temperature_tri_surf={:4.3f}.pdf'.format(tri_size))
+    plt.savefig('temperature_tri_surf={:2.1f}.pdf'.format(tri_size))
     plt.show()
 
 
@@ -659,14 +656,14 @@ if __name__ == '__main__':
     start = timeit.default_timer()
 
     # define the size of the triangular elements, this must be < 1
-    tri_size = 1/2
-    # construct the grid
+    tri_size = 1/16
+    # construct the grid and use finite elements to find T
     nodes, IEN, ID = generate_g_grid(tri_size)
-    # solve for the temperature using finite elements and plot the results
     T = finite_element_2d(nodes, IEN, ID, heat_source)
-    plot_temperature_triplot(nodes, IEN, tri_size, T)
-    plot_temperature_tri_surf(nodes, IEN, tri_size, T)
 
     stop = timeit.default_timer()
 
-    print('Run time: {:6.2f} seconds.'.format(stop - start))
+    print('\nSimulation run time: {:6.2f} seconds.'.format(stop - start))
+
+    plot_temperature_triplot(nodes, IEN, tri_size, T)
+    plot_temperature_tri_surf(nodes, IEN, tri_size, T)

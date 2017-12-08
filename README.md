@@ -83,3 +83,7 @@ state energy of particles in a box.
 ## brownian-motion
 Evaluates a function with a Brownian noise term over N different paths and M
 different realisations, where N, M = [500, 1000, 2000].
+## EM-Mil
+Evaluates an SDE using the Eular-Maruyama and Milstein methods. The code
+compares both solutions against the exact solution on the same plot and also
+compares the code execution time.
