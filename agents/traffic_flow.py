@@ -12,6 +12,26 @@ rcParams['figure.figsize'] = (12, 6)
 
 
 def evolve_traffic(grid):
+    """
+    Evolves a single lane of traffic by looking at each car and seeing if the
+    section of road before it is empty or not. If it is empty, the car moves 
+    forwards one space. If the road is occupied, the car stays where it is. 
+    
+    The road is a circular road in that periodic boundary conditions are 
+    enforced at the edge of the grid used to simulate the road.
+
+    Parameters
+    ----------
+    grid: 1 x n array of 0 and 1.
+        The road which the cars are moving on.
+
+    Returns
+    -------
+    grid: 1 x n array of 0 and 1.
+        The road after traffic has been evolved for one time step.
+    average_speed: float.
+        The average speed of all the cars during the time step.
+    """
     N = len(grid)
     N_cars = np.sum(grid[1:-1])
     car_moved_to = np.zeros_like(grid)

@@ -9,14 +9,47 @@ import numpy as np
 
 def E(n):
     """
-    Compute the energy for the quantum numbers
+    Compute the energy of a system given the quantum numbers n.
+
+    Parameters
+    ----------
+    n: n_particles x 3 array of ints.
+        The value of the quantum numbers describing the system.
+
+    Returns
+    -------
+    E: float.
+        The total energy of the system.
     """
 
     h = 2 * np.pi
-    return h ** 2/(8 * np.pi) * np.sum(n ** 2)
+    E = h ** 2/(8 * np.pi) * np.sum(n ** 2)
+    
+    return E
 
 
 def metropolis_hastings(states, n_steps, n_particles=100, beta=0.1):
+    """
+    Applies the Metropolis-Hastings algorithm to evolve a box towards its 
+    ground state energy.
+
+    Parameters
+    ----------
+    states: n_particles x 3 array of ints.
+        The quantum numbers for each particle contained in the box.
+    n_steps: int:
+        The number of steps to evolve the box of particles for.
+    n_particles: int.
+        The number of particles contained in the box.
+    beta: float.
+        The value of the inverse temperature of the box.
+
+    Returns
+    -------
+    energy_output: n_steps x 2 array of floats.
+        Column 0 contains the energy of the sytem at each time step and column 
+        2 contains the value of time at that timestep.
+    """
 
     spin_change = [-1, 1]
     energy_output = np.zeros((n_steps, 2))

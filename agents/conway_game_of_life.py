@@ -17,8 +17,19 @@ from matplotlib import pyplot, animation
 
 def find_neighbours(x):
     """
-    Very crude method of finding how many live neighbours are around a cell.
-    Only really works well when you use ghost cells.
+    Determine the number of alive neighbours surrounding a cell. 
+
+    Parameters
+    ----------
+    x: n x n array of 0 and 1. 
+        The grid of cells. An alive cell has a value of 1 and a dead cell has
+        a value of 0.
+
+    Returns
+    -------
+    nb: n x n array of ints.
+        Returns an array the same size as x where each cell has a count of the
+        number of alive neighbours. 
     """
 
     nb = np.zeros_like(x)
@@ -43,6 +54,16 @@ def find_neighbours(x):
 def conway_iteration(grid):
     """
     Compute a single step for Conway's Game of Life.
+
+    Parameters
+    ----------
+    grid: n x n array of 0 and 1.
+        The grid of cells which are either dead or alive.
+
+    Returns
+    -------
+    grid: n x n array of 0 and 1.
+        The grid of cells which are either dead or alive.
     """
 
     # find the number of neighbours which are alive
@@ -68,6 +89,21 @@ def conway_iteration(grid):
 
 
 def life_animation(grid, frames=10):
+    """
+    Returns an animation of Conway's Game of Life.
+
+    Parameters
+    ----------
+    grid: n x n array of 0 and 1.
+        The grid of cells which are either dead or alive.
+    frames: int.
+        The number of frames to animate for, i.e. the number of iterations.
+
+    Returns
+    -------
+    An animation of Conway's Game of Life.
+    """
+
     fig = pyplot.figure()
     im = pyplot.imshow(grid[1:-1, 1:-1],
                        cmap=pyplot.get_cmap('gray'),
@@ -75,13 +111,27 @@ def life_animation(grid, frames=10):
     im.set_clim(-0.005, 1)
 
     def init():
+        """
+        The initialisation function for Matplotlib's animations function. This
+        function sets up first frame.
+        """
+
         im.set_array(grid[1:-1, 1:-1])
         return im,
 
     def animate(i):
+        """
+        The function used to update the frames for the animation.
+
+        Returns
+        -------
+        im: func.
+            The grid at an iteration.
+        """
+
         conway_iteration(grid)
         im.set_array(grid[1:-1, 1:-1])
-        return im,
+        return im
 
     return animation.FuncAnimation(fig, animate, init_func=init,
                                    interval=100, frames=frames,

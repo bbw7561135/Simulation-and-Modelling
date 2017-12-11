@@ -1,22 +1,44 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Oct  2 18:04:33 2017
-
-@author: saultyevil
-"""
-
 import numpy as np
 
-
 def f(x):
+    """
+    The function to Monte Carlo integrate.
+
+    Parameters
+    ----------
+    x: float.
+        The coordinate location of a random point.
+
+    Returns
+    -------
+    x * x: float.
+        The coordinate location squared.
+    """
+    
     return x * x
 
 
 def mc_integrate_multid(f, R, num_dimen, N=100000):
     """
-    Monte Carlo integration in arbitrary dimensions (read from the size of
-    the domain): to be completed
+    Monte Carlo integration to compute the volume of an N-dimensional 
+    hypersphere.
+
+    Parameters
+    ----------
+    f: func.
+        The function to Monte Carlo integrate.
+    R: float.
+        The radius of the N-dimensional hypershpere.
+    num_dimen: int.
+        The number of dimensions of the hypersphere.
+    N: int.
+        The number of Monte Carlo sampling points.
+
+    Returns
+    ------- 
+    N_Vol: float.
+        The volume of the hypershere given the number of dimensions and its
+        radius R.
     """
 
     # the domain is going to be a list of lists
@@ -37,6 +59,8 @@ def mc_integrate_multid(f, R, num_dimen, N=100000):
         if sum <= R ** 2:
             k += 1
 
-    return volume * k / N
+    N_Vol = volume * k / N
+
+    return N_Vol
 
 print(mc_integrate_multid(f, 1, 3))

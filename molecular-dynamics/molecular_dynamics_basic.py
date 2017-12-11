@@ -2,7 +2,6 @@
 # Molecular Dynamics code using Newton's laws.
 # =============================================================================
 
-
 import timeit
 import numpy as np
 from matplotlib import pyplot as plt
@@ -19,10 +18,24 @@ rcParams['figure.figsize'] = (12, 6)
 # =========================================================================== #
 
 
-@jit
+@jit  # prepare to be amazed by a wanton usage of jit
 def LJ_potential(r_sq, r_c):
     """
-    Calculates the Lennard-Jones potential given a seperation r_sq
+    Calculates the Lennard-Jones potential given a seperation r_sq.
+
+    Parameters
+    ----------
+    r_sq: float.
+        The square distance between two particles.
+    r_c: float.
+        The cut off value of the distance. Any particles which are separated
+        further than this distance will not be affected by one another and thus
+        dphi = 0.
+
+    Returns
+    -------
+    dphi: float.
+        The value of the force exerted between two particles.
     """
 
     dphi = np.where(r_sq < (r_c ** 2), 24 * (2 * (1/(r_sq ** 7)) -
@@ -34,7 +47,21 @@ def LJ_potential(r_sq, r_c):
 @jit
 def reset_particles(x, BoxSize):
     """
-    Impose periodic boundaries.
+    Impose periodic boundaries in the box.
+
+    Parameters
+    ----------
+    x: n_particles x 3 array of floats.
+        The coordinate locations of all the particles in the box.
+    BoxSize: float.
+        The size of the box. Assumes that the particles are contained within
+        a square box.
+    
+    Returns
+    -------
+    x: n_particles x 3 array of floats.
+        The coordainte locations of all the particles in the box after periodic
+        boundary condtions have been applied.
     """
 
     x[x < 0] += BoxSize
@@ -46,8 +73,26 @@ def reset_particles(x, BoxSize):
 @jit
 def acceleration_calc(positions, mass, BoxSize, r_c):
     """
-    Calculate the position of a system of particles given their x, y, z
-    coordinates.
+    Calculate the acceleration felt between particles.
+
+    Parameters
+    ----------
+    positions: n_particles x 3 array of floats.
+        The coordainte locations of each particle.
+    mass: n_particles x 1 array of floats.
+        The masses of each particle.
+    BoxSize: float.
+        The size of the box. Assumes that the particles are contained within
+        a square box.
+    r_c: float.
+        The cut off value of the distance. Any particles which are separated
+        further than this distance will not be affected by one another and thus
+        dphi = 0.
+
+    Returns
+    -------
+    a: n_particles x 3 array of floats.
+        An array containing the accelerations of each particle.
     """
 
     n_particles = len(positions)
@@ -71,8 +116,33 @@ def acceleration_calc(positions, mass, BoxSize, r_c):
 @jit
 def time_step(vel, accel, positions, masses, BoxSize, delta_t):
     """
-    Compute a time step for the system. Returns the new velocities, positions
-    and accelerations.
+    Update the positions, velocities and acceleration of the particles in a box
+    using Verlet integration.
+
+    Parameters
+    ----------
+    vel: n_particles x 3 array of floats.
+        The velocities of the particles.
+    accel: n_particles x 3 array of floats.
+        The accelerations of the particles.
+    positions: n_particles x 3 array of floats.
+        The coordainte locations of the particles.
+    mass: n_particles x 1 array of floats.
+        The masses of the particles.
+    BoxSize: float.
+        The size of the box. Assumes that the particles are contained within
+        a square box.
+    delta_t: float.
+        The size of the time step.
+
+    Returns
+    -------
+    positions_new: n_particles x 3 array of floats.
+        The updated positions of the particles.
+    accel_new: n_particles x 3 array of floats.
+        The updated accelerations of the particles.
+    vel_new: n_particles x 3 array of floats.
+        The updated velocities of the particles.
     """
 
     positions_new = positions + delta_t * vel + 0.5 * delta_t ** 2 * accel
@@ -87,7 +157,22 @@ def time_step(vel, accel, positions, masses, BoxSize, delta_t):
 @jit
 def calc_temp(velocities, positions, masses):
     """
-    Calculate the temperature for a given configuration of particles.
+    Calculate the temperature of system of particles in a box.
+    
+    Paramters
+    ---------
+    velocities: n_particles x 3 array of floats.
+        The velocities of the particles.
+    positions: n_particles x 3 array of floats.
+        The coordinate locations of the particles.
+    masses: n_particles x 1 array of floats.
+        The masses of the particles.
+
+    Returns
+    -------
+    temp: float.
+        The temperature of the system given the kinetic energy of the particles
+        and gas dynamics.
     """
 
     N = len(velocities)
@@ -105,7 +190,6 @@ def calc_temp(velocities, positions, masses):
 # =============================================================================
 # Simulation Parameters and Initial States
 # =============================================================================
-
 
 start = timeit.default_timer()
 
@@ -129,7 +213,6 @@ temperature_array[0] = calc_temp(velocities, particles, masses)
 # Time Evolution
 # =============================================================================
 
-
 for i in range(n_steps):
     particles, accelerations, velocities = time_step(velocities, accelerations,
                                                      particles, masses,
@@ -142,7 +225,6 @@ for i in range(n_steps):
 # =============================================================================
 # Plot Positions and Temperature
 # =============================================================================
-
 
 # position of one particle as a function of time
 fig = plt.figure()
@@ -187,6 +269,5 @@ stop = timeit.default_timer()
 # =============================================================================
 # Printing stuff
 # =============================================================================
-
 
 print('Run time {:6.2f} seconds'.format(stop - start))

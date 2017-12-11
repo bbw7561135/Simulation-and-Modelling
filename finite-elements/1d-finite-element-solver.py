@@ -24,13 +24,28 @@ rcParams['figure.figsize'] = (12, 6)
 def f_function(x):
     """
     The function used when computing the local force matrix.
+
+    Parameters
+    ----------
+    x: float.
+        The coordinate location of a node.
     """
     return x * x
 
 
 def local_stiffness(local_nodes):
     """
-    Compute the local stiffness matrix for an element.
+    Compute the local stiffness matrix for an element with nodes local_nodes.
+
+    Parameters
+    ----------
+    local_nodes: 1 x 2 array of floats.
+        The coordinate locations of the nodes which define an element.
+
+    Returns
+    -------
+    k: 2 x 2 array of floats.
+        The stiffness coefficents of an element.
     """
 
     N = len(local_nodes)
@@ -46,6 +61,16 @@ def local_stiffness(local_nodes):
 def local_force(local_nodes):
     """
     Compute the local force vector for an element.
+
+    Parameters
+    ----------
+    local_nodes: 1 x 2 array of floats.
+        The coordinate locations of the nodes which define an element.
+
+    Returns
+    -------
+    f: 2 x 2 array of floats.
+        The force vector of an element.
     """
 
     f = ((local_nodes[1] - local_nodes[0])/6) * \
@@ -57,7 +82,27 @@ def local_force(local_nodes):
 
 def finite_element(interval, N_Elements):
     """
-    Compute the temperature using finite elements.
+    Compute the temperatre of a 1D mesh using finite elements. This algorithm
+    first creates a grid and then creates the location matrix to link the nodes
+    to elements.
+
+    The local force and stiffness matrices are then computed and added to the
+    global force and stifness matrices. To solve for temperature, the linear
+    system k * T = F is solved.
+
+    Parameters
+    ----------
+    interval: list of 2 floats.
+        The start and end point of the finite element mesh.
+    N_Elements: float.
+        The number of elements in the finite element mesh.
+
+    Returns
+    -------
+    x: 1 x N_Elements array of floats.
+        The coordinate locations of the elements in the mesh.
+    T: 1 x N_Elements array of floats.
+        The temperature of each element.
     """
 
     # x are the global node locations
