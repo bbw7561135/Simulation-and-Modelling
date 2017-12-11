@@ -19,7 +19,7 @@ mu = 1
 lamda = 2
 t_end = 1
 N = 2 ** 10
-M = 10000
+M = 5000
 ratios = 2 ** np.arange(7)
 
 # define a seed for reproducible solutions
@@ -184,6 +184,7 @@ def g(x):
 def gprime(x):
     return mu
 
+
 # =============================================================================
 # Compute the solutions, plot and compare execution run time
 # =============================================================================
@@ -227,7 +228,8 @@ avg_t_M = time_M.autorange()[1]
 
 print('Average runtime for Euler-Maruyama = {:0.5f} seconds.'.format(avg_t_EM))
 print('Average runtime for Milstein = {:0.5f} seconds.'.format(avg_t_M))
-print('Milstein takes {:2.2f}% longer.\n'.format(avg_t_EM / avg_t_M * 100))
+print('Milstein takes {:2.2f}% longer. This value may be fake news!\n'.format(
+        avg_t_EM / avg_t_M * 100))
 
 
 # =============================================================================
@@ -268,7 +270,7 @@ strong_error_EM = np.mean(errors_strong_EM, axis=1)
 strong_fit_M = np.polyfit(np.log(dT), np.log(strong_error_M), 1)
 strong_fit_EM = np.polyfit(np.log(dT), np.log(strong_error_EM), 1)
 
-fig = plt.figure(figsize=(24, 6))
+fig = plt.figure(figsize=(24, 9))
 ax1 = fig.add_subplot(121)
 ax1.loglog(dT, strong_error_M, 'kx')
 ax1.loglog(dT, strong_error_EM, 'kx')
@@ -279,7 +281,7 @@ ax1.loglog(dT, np.exp(strong_fit_EM[1]) * dT ** strong_fit_EM[0],
                    strong_fit_EM[0]))
 ax1.set_xlabel('Brownian Time Step, $dt$')
 ax1.set_ylabel('Error, $\mathbb{E}$')
-ax1.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15))
+ax1.legend(loc='lower right')
 ax1.set_title('Strong Convergence')
 
 # weak convergence
@@ -317,7 +319,7 @@ ax2.loglog(dT, np.exp(weak_fit_EM[1]) * dT ** weak_fit_EM[0],
                    weak_fit_EM[0]))
 ax2.set_xlabel('Brownian Time Step, $dt$')
 ax2.set_ylabel('Error, $\mathbb{E}$')
-ax2.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15))
+ax2.legend(loc='lower right')
 ax2.set_title('Weak Convergence')
 
 plt.savefig('convergence_tests.pdf')
