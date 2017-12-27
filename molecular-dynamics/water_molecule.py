@@ -17,27 +17,102 @@ rcParams['figure.figsize'] = (9, 25)
 # Functions
 # =============================================================================
 
-
 def molecule_positions(x):
+    """
+    Compute the potential energy of the particles given their positions.
+
+    Parameters
+    ----------
+    x: 4 x 1 array of floats.
+        The x, y positions of each hydrogen atom.
+
+    Returns
+    -------
+    The potential force.... AHHHHH
+    """
     return V_func(0, 0, 0, x[0], x[1], 0, x[2], x[3], 0)
 
 
 def fO(rX, rY, rZ):
+    """
+    Compute the internal molecular force for the oxygen atom.
+
+    Parameters
+    ----------
+    rX: 1x3 array. The x coordinates for the atoms in the molecule.
+    rY: 1x3 array. The y coordinates for the atoms in the molecule.
+    rZ: 1x3 array. The z coordinates for the atoms in the molecule.
+
+    Returns
+    -------
+    An array containing the forces felt by the oxygen atom due to the
+    internal potential from the other atoms.
+    """
+
     return np.array(F_O(rX[0], rY[0], rZ[0], rX[1], rY[1], rZ[1], rX[2],
                         rY[2], rZ[2]))
 
 
 def fH1(rX, rY, rZ):
+    """
+    Compute the internal molecular force for the first hydrogen atom.
+
+    Parameters
+    ----------
+    rX: 1x3 array. The x coordinates for the atoms in the molecule.
+    rY: 1x3 array. The y coordinates for the atoms in the molecule.
+    rZ: 1x3 array. The z coordinates for the atoms in the molecule.
+
+    Returns
+    -------
+    An array containing the forces felt by the first hydorgen
+    atom due to the internal potential from the other atoms.
+    """
+
     return np.array(F_H1(rX[0], rY[0], rZ[0], rX[1], rY[1], rZ[1], rX[2],
                          rY[2], rZ[2]))
 
 
 def fH2(rX, rY, rZ):
+    """
+    Compute the internal molecular force for the second hydrogen atom.
+
+    Parameters
+    ----------
+    rX: 1x3 array. The x coordinates for the atoms in the molecule.
+    rY: 1x3 array. The y coordinates for the atoms in the molecule.
+    rZ: 1x3 array. The z coordinates for the atoms in the molecule.
+
+    Returns
+    -------
+    An array containing the forces felt by the first hydorgen
+    atom due to the internal potential from the other atoms.
+    """
+
     return np.array(F_H2(rX[0], rY[0], rZ[0], rX[1], rY[1], rZ[1], rX[2],
                          rY[2], rZ[2]))
 
 
 def acceleration(x, mass):
+    """
+    Calculate the acceleration on an atom using Newton's second law due to
+    the potential between atoms in a molecule.
+
+    Parameters
+    ----------
+    x: N x 3 array of floats.
+        The positions of the atoms of the molecules, N depends on the number of
+         molecules.
+    mass: N x 1 array of floats. 
+        The masses of the atoms. The first element should be the mass of 
+        hydrogen and the second element should be the mass of oxygen.
+
+    Returns
+    -------
+    a: N x 3 array of floats. 
+        The acceleration of the atoms in the N molecules due to the force 
+        experienced due to the internal potential.
+    """
 
     a = np.zeros_like(x)
 
@@ -51,6 +126,32 @@ def acceleration(x, mass):
 
 
 def verlet_int(x, v, a, mass, dt):
+        """
+    Update the positions, velocities and acceleration of the particles in a box
+    using Verlet integration.
+
+    Parameters
+    ----------
+    x: n_particles x 3 array of floats.
+        The coordainte locations of the particles.    
+    v: n_particles x 3 array of floats.
+        The velocities of the particles.
+    a: n_particles x 3 array of floats.
+        The accelerations of the particles.
+    mass: n_particles x 1 array of floats.
+        The masses of the particles.
+    dt: float.
+        The size of the time step.
+
+    Returns
+    -------
+    xnew: n_particles x 3 array of floats.
+        The updated positions of the particles.
+    vnew: n_particles x 3 array of floats.
+        The updated velocities of the particles.    
+    anew: n_particles x 3 array of floats.
+        The updated accelerations of the particles.
+    """
 
     xnew = x + dt * v + 0.5 * dt ** 2 * a
     vstar = v + 0.5 * dt * a
@@ -184,6 +285,7 @@ fig.tight_layout()
 plt.savefig('positions_of_atoms.pdf')
 
 stop = timeit.default_timer()
+
 
 # =============================================================================
 # Printing

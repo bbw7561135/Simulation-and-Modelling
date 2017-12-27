@@ -18,8 +18,8 @@ X0 = 1
 mu = 1
 lamda = 2
 t_end = 1
-N = 2 ** 10
-M = 5000
+N = int(2 ** 10)
+M = int(10e3)
 ratios = 2 ** np.arange(7)
 
 # define a seed for reproducible solutions
@@ -206,7 +206,7 @@ ax1.plot(t, X_EM, 'b--', label='Euler-Maruyama')
 ax1.plot(t, X_M, 'r--', label='Milstein')
 ax1.set_xlabel('$t$')
 ax1.set_ylabel('$X(t)$')
-ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+ax1.legend(loc='lower right')
 plt.show()
 
 
@@ -275,9 +275,9 @@ ax1 = fig.add_subplot(121)
 ax1.loglog(dT, strong_error_M, 'kx')
 ax1.loglog(dT, strong_error_EM, 'kx')
 ax1.loglog(dT, np.exp(strong_fit_M[1]) * dT ** strong_fit_M[0],
-           'k--', label='Milstein Convergence {:2.3f}'.format(strong_fit_M[0]))
+           '--', label='Milstein Convergence {:2.3f}'.format(strong_fit_M[0]))
 ax1.loglog(dT, np.exp(strong_fit_EM[1]) * dT ** strong_fit_EM[0],
-           'k--', label='Euler-Maruyama Convergence {:2.3f}'.format(
+           '--', label='Euler-Maruyama Convergence {:2.3f}'.format(
                    strong_fit_EM[0]))
 ax1.set_xlabel('Brownian Time Step, $dt$')
 ax1.set_ylabel('Error, $\mathbb{E}$')
@@ -313,9 +313,9 @@ ax2 = fig.add_subplot(122)
 ax2.loglog(dT, weak_errors_M, 'kx')
 ax2.loglog(dT, weak_errors_EM, 'kx')
 ax2.loglog(dT, np.exp(weak_fit_M[1]) * dT ** weak_fit_M[0],
-           'k--', label='Milstein Convergence {:2.3f}'.format(weak_fit_M[0]))
+           '--', label='Milstein Convergence {:2.3f}'.format(weak_fit_M[0]))
 ax2.loglog(dT, np.exp(weak_fit_EM[1]) * dT ** weak_fit_EM[0],
-           'k--', label='Euler-Maruyama Convergence {:2.3f}'.format(
+           '--', label='Euler-Maruyama Convergence {:2.3f}'.format(
                    weak_fit_EM[0]))
 ax2.set_xlabel('Brownian Time Step, $dt$')
 ax2.set_ylabel('Error, $\mathbb{E}$')
