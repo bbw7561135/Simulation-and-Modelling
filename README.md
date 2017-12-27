@@ -91,3 +91,6 @@ different realisations, where N, M = [500, 1000, 2000].
 Evaluates an SDE using the Eular-Maruyama and Milstein methods. The code
 compares both solutions against the exact solution on the same plot and also
 compares the code execution time.
+## OU
+Evaluates the Ornstein-Uhlenbeck equation using the Euler-Maruyama method for
+single and multiple realisiations.
