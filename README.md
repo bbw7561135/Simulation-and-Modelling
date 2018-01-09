@@ -30,9 +30,9 @@ The submitted Jupyter notebook for the agents coursework.
 The submitted Jupyter notebook for the finite Elements coursework.
 
 # finite-elements
-## 1d-finite-element-solver
+## 1d_finite_element_solver
 Computes the temperature of a 1D system using finite element methods.
-## 2d-finite-element-solver
+## 2d_finite_element_solver
 Computes the temperature of a 2D system using finite element methods given the
 node locations, IEN and ID arrays for a mesh and heat source function.
 ## big_g
@@ -40,6 +40,8 @@ An application of 2d-finite-element-solver to solve for the temperature of a
 g shaped grid. The boundary conditions of the grid set the right side of the
 grid to a fixed temperature of T = 0. At all other boundaries, the normal
 derivative of the temperature vanishes.
+## test_big_g
+Pytest style tests for big_g.
 
 # molecular-dynamics
 ## co_molecule
@@ -83,14 +85,35 @@ Calculates the area and volume of a sphere using Monte Carlo integration.
 An application of the Metropolis-Hasting algorithm to calculate the ground
 state energy of particles in a box.
 
+# self-consistent-fields
+## hartree_fock
+A simulation of a H-H+ molecule using the Hartree-Fock method. The energy
+of the molecule is printed to screen.
+## hartree_fock_water
+A simulation of a water molecule using the Hartree-Fock method. The plots of
+the molecular orbits are plotted for the 1s, 2s and 2p orbitals for the oxygen
+and hydrogen atoms. The STO-3G function basis is used to construct the 
+molecular orbitals.
+
 # stochastic-DEs
-## brownian-motion
+## brownian_motion
 Evaluates a function with a Brownian noise term over N different paths and M
 different realisations, where N, M = [500, 1000, 2000].
 ## EM_Mil
 Evaluates an SDE using the Eular-Maruyama and Milstein methods. The code
 compares both solutions against the exact solution on the same plot and also
 compares the code execution time.
+## ornstein_uhlenbeck_convergence
+The Ornstein-Uhlenbeck equation is solved using the Euler-Maruyama method
+and the theta method. The weak convergence of each method is tested. The 
+methods are tested by plotting a histogram of the results at one point for
+many realisations. The late time solution is compared to the expected late
+solution. The E-M method is expected to have a weak convergence of 1 (this 
+result can be improved by increasing the amount of realisations) and the
+Theta method is expected to have no convergence. Both the histogram and late
+time result solutions show that both methods are sampling correctly and 
+computing the expected solution.
 ## OU
 Evaluates the Ornstein-Uhlenbeck equation using the Euler-Maruyama method for
 single and multiple realisiations.
+
