@@ -285,8 +285,8 @@ t, dt = np.linspace(t_start, t_end, N+1, retstep=True)  # reference t, dt vals
 # once as the final value will stay the same for each resolution
 EX, EXSq = OU_Expectation(X0, mu, lamda, t)  # calc expected values
 
-dT = np.zeros(len(resolutions))
-weak_errors = np.zeros(len(resolutions))
+dT = np.zeros(n_resolutions)
+weak_errors = np.zeros(n_resolutions)
 for i, r in enumerate(resolutions):
     dT[i] = dt_r = r * dt  # calculate grid spacing for N points on grid
     t_r = t[::r]           # use ref grid to get grid points location
@@ -385,8 +385,8 @@ EX, EXSq = OU_Expectation(X0, mu, lamda, t)
 
 theta = 0.5  # the value of the theta parameter, for the theta method
 
-dT = np.zeros(len(n_resolutions))
-weak_errors = np.zeros(len(n_resolutions))
+dT = np.zeros(n_resolutions)
+weak_errors = np.zeros(n_resolutions)
 for i, r in enumerate(resolutions):
     dT[i] = dt_r = r * dt
     t_r = t[::r]
