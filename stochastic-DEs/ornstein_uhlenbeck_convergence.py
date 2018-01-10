@@ -326,49 +326,40 @@ t_end = 10
 t, dt = np.linspace(t_start, t_end, N+1, retstep=True)
 dW = np.sqrt(dt) * np.random.randn(N, M)
 
-X_EM = np.zeros((N+1, M))
+X_EM_H = np.zeros((N+1, M))
 for m in range(M):
-    X_EM[:, m] = EM(dW[:, m], dt, X0, fn, gn)
-
+    X_EM_H[:, m] = EM(dW[:, m], dt, X0, fn, gn)
+    
 # plot X(10) for each realisation on a histogram. The values of X(10) are
 # expected to follow a normal distribution as E-M samples the Wiener increments
 # randomly from a normal distribution
-plt.hist(X_EM[-1, :], bins=50, edgecolor='black', linewidth=1.0, normed=True)
-plt.xlabel('X(10)')
-plt.ylabel('Normed Frequency')
-plt.title('Euler-Maruyama X(10) Histogram')
-plt.show()
-
-# =============================================================================
-# E-M limit as T -> infinty
-# =============================================================================
-
-# compute the variance and mean of the computed solution and construct a normal
-# distribution using these values. Compare this distribution to the normal
-# distribution computed using the mean and variance of the expected solution
-# of the O-U equation.
-
-t = np.linspace(-4, 4, 100)  # linspace for the norm dists
+n, bins, patches = plt.hist(X_EM_H[-1, :], bins=50, edgecolor='black', 
+                            linewidth=1.0, normed=True)
 
 # construct the norm dist for the reference norm
 ref_variance = mu ** 2/(2 * lamda - lamda ** 2 * dt)
 ref_sigma = np.sqrt(ref_variance)
 ref_mean = 0
-ref_norm = norm.pdf(t, loc=ref_mean, scale=ref_sigma)
-
-# construct the norm dist using the computed solution
-EM_var = np.mean(np.mean(X_EM ** 2, axis=1))
-EM_sigma = np.sqrt(EM_var)
-EM_mean = np.mean(np.mean(X_EM, axis=1))
-EM_norm = norm.pdf(t, loc=EM_mean, scale=EM_sigma)
-
-plt.plot(t, ref_norm, '--',
+ref_norm = norm.pdf(bins, loc=ref_mean, scale=ref_sigma)
+plt.plot(bins, ref_norm, 'r-', 
          label=r'$N(0, \frac{\mu^2}{2\lambda - \lambda^2 \delta t})$')
-plt.plot(t, EM_norm, '-', label=r'$X^h(t)$')
-plt.xlabel('t')
-plt.ylabel(r'$N(\mu, \sigma^2)$')
+
+# calculate the variance of X(10) and plot a normal distribution
+EM_var = np.mean(X_EM_H[-1, :] ** 2)
+EM_sigma = np.sqrt(EM_var)
+EM_mean = np.mean(X_EM_H[-1, :])
+EM_norm = norm.pdf(bins, loc=EM_mean, scale=EM_sigma)
+plt.plot(bins, EM_norm, 'k*', label=r'$X^h(10)$')
+
+plt.xlabel('X(10)')
+plt.ylabel('Normed Frequency')
+plt.title('Euler-Maruyama X(10) Histogram')
 plt.legend()
 plt.show()
+
+print('Reference variance: {:2.3f}\nReference mean: {:2.3f}'
+      .format(ref_variance, ref_mean))
+print('E-M variance: {:2.3f}\nE-M mean: {:2.3f}'.format(EM_var, EM_mean))
 
 # =============================================================================
 # Weak Convergence - TM
@@ -422,33 +413,36 @@ t_end = 10
 t, dt = np.linspace(t_start, t_end, N+1, retstep=True)
 dW = np.sqrt(dt) * np.random.randn(N, M)
 
-X_THETA = np.zeros((N+1, M))
-for m in range(M):
-    X_THETA[:, m] = TM(dW[:, m], dt, X0, theta, mu, lamda)
+theta = 0.5
 
-plt.hist(X_THETA[-1, :], bins=50, edgecolor='black', linewidth=1.0,
-         normed=True)
+X_THETA_H = np.zeros((N+1, M))
+for m in range(M):
+    X_THETA_H[:, m] = TM(dW[:, m], dt, X0, theta, mu, lamda)
+
+n, bins, patches = plt.hist(X_THETA_H[-1, :], bins=50, edgecolor='black', 
+                            linewidth=1.0, normed=True)
+
+# construct the norm dist for the reference norm
+ref_variance = mu ** 2/(2 * lamda - lamda ** 2 * dt)
+ref_sigma = np.sqrt(ref_variance)
+ref_mean = 0
+ref_norm = norm.pdf(bins, loc=ref_mean, scale=ref_sigma)
+plt.plot(bins, ref_norm, 'r-', 
+         label=r'$N(0, \frac{\mu^2}{2\lambda - \lambda^2 \delta t})$')
+
+# calculate the norm distribution for theta
+TM_var = np.mean(X_THETA_H[-1, :] ** 2)
+TM_sigma = np.sqrt(TM_var)
+TM_mean = np.mean(X_THETA_H[-1, :])
+TM_norm = norm.pdf(bins, loc=EM_mean, scale=EM_sigma)
+plt.plot(bins, TM_norm, 'k*', label=r'$X^h(10)$')
+
 plt.xlabel('X(10)')
 plt.ylabel('Normed Frequency')
 plt.title('Theta X(10) Histogram')
-plt.show()
-
-# =============================================================================
-# TM limit as T -> infinty
-# =============================================================================
-
-t = np.linspace(-4, 4, 100)  # linspace for norm dist
-
-# calculate the norm dist using the computed solution
-TM_var = np.mean(np.mean(X_THETA ** 2, axis=1))
-TM_sigma = np.sqrt(TM_var)
-TM_mean = np.mean(np.mean(X_THETA, axis=1))
-TM_norm = norm.pdf(t, loc=TM_mean, scale=TM_sigma)
-
-plt.plot(t, ref_norm, '--',
-         label=r'$N(0, \frac{\mu^2}{2\lambda - \lambda^2 \delta t})$')
-plt.plot(t, EM_norm, '-', label=r'$X^h(t)$')
-plt.xlabel('t')
-plt.ylabel('Frequency')
 plt.legend()
 plt.show()
+
+print('Reference variance: {:2.3f}\nReference mean: {:2.3f}'
+      .format(ref_variance, ref_mean))
+print('TM variance: {:2.3f}\nTM mean: {:2.3f}'.format(TM_var, TM_mean))
