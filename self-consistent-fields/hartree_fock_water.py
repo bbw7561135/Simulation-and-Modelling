@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import rcParams
@@ -30,7 +31,7 @@ def transformation_matrix(S):
     # check that the elements are finite, that there are elements and that
     # the matrix is in the correct form
     assert(np.all(np.isfinite(S))), 'The entries of S are not finite.'
-    assert(S.shape[0] > 0), 'C has no entries.'
+    assert(S.shape[0] > 0), 'S has no entries.'
     assert(S.shape[0] == S.shape[1]), 'S is not square.'
 
     eigvals, eigvecs = np.linalg.eig(S)
@@ -104,7 +105,11 @@ def flock_matrix(H, G, D):
 
     # for each matrix:
     # check that the elements are finite, that there are elements and that
-    # the matrix is in the correct form
+    # the matrix is in the correct form, kind of a weak check as the rows
+    # could be correct, but the columns incorrect :-(
+    assert(H.shape[0] == G.shape[0] == D.shape[0]), \
+        'The array shapes are not compatiable.'
+
     assert(np.all(np.isfinite(H))), 'The entries of H are not finite.'
     assert(H.shape[0] > 0), 'H has no entries.'
     assert(H.shape[0] == H.shape[1]), 'H is not square.'
@@ -315,6 +320,40 @@ def total_energy(D, H, F, Vnn):
     return Etot
 
 
+def matrix_diff(D, DNew):
+    """
+    Calculate the difference between two density matrices. In this case
+    the difference between an old and updated density matrix.
+
+    Parameters
+    ----------
+    D: (n orbitals x n orbitals) array of floats.
+        The old density matrix of the system.
+    DNew: (n orbitals x n orbitals) array of floats.
+        The updated density matrix of the system.
+
+    Returns
+    -------
+    difference: float.
+        The difference between the two density matrices.
+    """
+
+    assert(D.shape == DNew.shape), \
+        'The densitry matrices are different sizes.'
+
+    n = D.shape[0]
+
+    # loop over each element of the matrices and subtract the elements
+    difference = 0
+    for mu in range(n):
+        for nu in range(n):
+            difference += (D[mu, nu] - DNew[mu, nu]) ** 2
+
+    difference = np.sqrt(difference)
+
+    return difference
+
+
 def HF_iteration(S, H, G, C, Vnn, n_electrons, tol=1e-6):
     """
     Iterates the given matrices using the Hatree-Fock method until the
@@ -344,6 +383,8 @@ def HF_iteration(S, H, G, C, Vnn, n_electrons, tol=1e-6):
         The total energy of the system, including the nuclear repulsion energy.
     C: (n orbitals x n orbitals) array of floats.
         The coefficents for the molecular orbits once the system has converged.
+    OE: (1 x n orbitals) array of floats.
+        The energies of each molecular orbit.
     """
 
     # for each matrix:
@@ -377,38 +418,7 @@ def HF_iteration(S, H, G, C, Vnn, n_electrons, tol=1e-6):
     assert(np.isfinite(Vnn)), 'Vnn is not finite.'
     assert(type(Vnn) is float or int), 'Vnn is of type float or int.'
 
-    def matrix_diff(D, DNew):
-        """
-        Calculate the difference between two density matrices. In this case
-        the difference between an old and updated density matrix.
 
-        Parameters
-        ----------
-        D: (n orbitals x n orbitals) array of floats.
-            The old density matrix of the system.
-        DNew: (n orbitals x n orbitals) array of floats.
-            The updated density matrix of the system.
-
-        Returns
-        -------
-        difference: float.
-            The difference between the two density matrices.
-        """
-
-        assert(D.shape == DNew.shape), \
-            'The densitry matrices are different sizes.'
-
-        n = D.shape[0]
-
-        # loop over each element of the matrices and subtract the elements
-        difference = 0
-        for mu in range(n):
-            for nu in range(n):
-                difference += (D[mu, nu] - DNew[mu, nu]) ** 2
-
-        difference = np.sqrt(difference)
-
-        return difference
 
     X = transformation_matrix(S)
     D = density_matrix(C, n_electrons)
@@ -445,7 +455,45 @@ def HF_iteration(S, H, G, C, Vnn, n_electrons, tol=1e-6):
 # Constructing the Basis Fuctions & Molecular Orbits
 # =============================================================================
 
-def basis_functions(R):
+def basis(R, a, c):
+    """
+    Calculate the value of the STO-3G basis function at a given distance
+    r from a nucelus.
+
+    Parameters
+    ----------
+    R: float.
+        The distance between a point in space and the nucleus of the orbit.
+    a: (1 x 3) array of floats.
+        The a coefficents for the orbit for the STO-3G basis functions.
+    c: (1 x 3) array of floats.
+        The c coefficents for the orbit for the ST0-3G basis functions.
+
+    Returns
+    -------
+    chi: float.
+        The value of the basis function at the distance R from the nucelus.
+    """
+
+    assert(type(R) is float or int), 'R is of type float or int.'
+    assert(a.size == 3), 'Incorrect number of a coefficents supplied.'
+    assert(c.size == 3), 'Incorrect number of c coefficents supplied.'
+
+    n_phi = 3  # number of gaussians making up the basis function
+
+    chi = 0  # iterate through each value of a, c, and xi
+    for i in range(n_phi):
+        # if orb > 1 and orb < 5:
+        #    chi += R * (c[i] * (((2 * a[i])/np.pi) ** (3/4)) *
+        #                np.exp(-(a[i]) * R ** 2))
+        # else:
+        chi += c[i] * (((2 * a[i])/np.pi) ** (3/4)) * \
+            np.exp(-(a[i]) * R ** 2)
+
+    return chi
+
+
+def basis_functions(R, C):
     """
     Construct the basis functions for an orbital for a given distance R from
     the nucelus. The function will output the orbital basis functions as:
@@ -459,8 +507,11 @@ def basis_functions(R):
 
     Parameters
     ----------
-    R: (1 x 7) array of floats.
-        The position of a point in space.
+    R: (1 x n orbitals) array of floats.
+        The distance from a point in space to the nucleus of the orbital.
+    C: (n orbitals x n orbitals) array of floats.
+        The coefficents for the molecular orbit basis functions. Used to figure
+        out the number of orbitals.
 
     Returns
     -------
@@ -468,43 +519,6 @@ def basis_functions(R):
         The value of the basis functions for the orbitals at a position in
         space R.
     """
-
-    def basis(R, a, c, orb):
-        """
-        Calculate the value of the STO-3G basis function at a given distance
-        r from a nucelus.
-
-        Parameters
-        ----------
-        R: float.
-            The distance between a point in space and the nucleus of the orbit.
-        a: (1 x 3) array of floats.
-            The a coefficents for the orbit for the STO-3G basis functions.
-        c: (1 x 3) array of floats.
-            The c coefficents for the orbit for the ST0-3G basis functions.
-
-        Returns
-        -------
-        chi: float.
-            The value of the basis function at the distance R from the nucelus.
-        """
-
-        assert(type(R) is float or int), 'R is of type float or int.'
-        assert(a.size == 3), 'Incorrect number of a coefficents supplied.'
-        assert(c.size == 3), 'Incorrect number of c coefficents supplied.'
-
-        n_phi = 3  # number of gaussians making up the basis function
-
-        chi = 0  # iterate through each value of a, c, and xi
-        for i in range(n_phi):
-            # if orb > 1 and orb < 5:
-            #    chi += R * (c[i] * (((2 * a[i])/np.pi) ** (3/4)) *
-            #                np.exp(-(a[i]) * R ** 2))
-            # else:
-            chi += c[i] * (((2 * a[i])/np.pi) ** (3/4)) * \
-                np.exp(-(a[i]) * R ** 2)
-
-        return chi
 
     n_orbitals = C.shape[0]
     assert(R.size == n_orbitals), \
@@ -538,7 +552,7 @@ def basis_functions(R):
     # construct the basis functions for an orbital
     basis_functions = np.zeros(n_orbitals)
     for mu in range(n_orbitals):
-        basis_functions[mu] = basis(R[mu], a[mu, :], c[mu, :], mu)
+        basis_functions[mu] = basis(R[mu], a[mu, :], c[mu, :])
 
     return basis_functions
 
@@ -576,7 +590,7 @@ def molecular_orbits(C, r):
     assert(C.shape[0] == C.shape[1]), 'C is not square.'
 
     assert(np.all(np.isfinite(r))), 'r is not finite.'
-    assert(type(r) is float or int), 'r is of type float or int.'
+    assert(r.size == 3), 'r has to be a 3D vector.'
 
     n_orbitals = C.shape[0]
 
@@ -595,7 +609,7 @@ def molecular_orbits(C, r):
 
     # finally calculate the molecular orbits for all the orbitals
     MO = np.zeros(n_orbitals)
-    basis = basis_functions(R)
+    basis = basis_functions(R, C)
     for orb in range(n_orbitals):
         for mu in range(n_orbitals):
             MO[orb] += C[orb, mu] * basis[mu]
@@ -647,75 +661,78 @@ H = np.array([[-3.26850823e+01, -7.60432270e+00, 0.00000000e+00,
 # =============================================================================
 # Calculate the Energy and Molecular Orbits
 # =============================================================================
+if __name__ == '__main__':
+    pytest.main(['-v'])
 
-# calculate the energy of the system and MO coefficents
-E, C, OE = HF_iteration(S, H, G, np.zeros_like(H), Vnn, Nelectrons, tol=1e-10)
-n_orbitals = C.shape[0]
+    # calculate the energy of the system and MO coefficents
+    E, C, OE = HF_iteration(S, H, G, np.zeros_like(H), Vnn, Nelectrons,
+                            tol=1e-10)
+    n_orbitals = C.shape[0]
 
-# create x-y plane
-n_points = 500
-x = np.linspace(-5, 5, n_points)
-y = np.linspace(-5, 5, n_points)
-X, Y = np.meshgrid(x, y)
+    # create x-y plane
+    n_points = 300
+    x = np.linspace(-4, 4, n_points)
+    y = np.linspace(-4, 4, n_points)
+    X, Y = np.meshgrid(x, y)
 
-# iterate through each point in the plane and calculate the MO
-MO = np.zeros((n_orbitals, n_points, n_points))
-for i in range(n_points):
-    for j in range(n_points):
-        r = np.array([X[i, j], Y[i, j], 0])
-        MO[:, i, j] = molecular_orbits(C, r)
+    # iterate through each point in the plane and calculate the MO
+    MO = np.zeros((n_orbitals, n_points, n_points))
+    for i in range(n_points):
+        for j in range(n_points):
+            r = np.array([X[i, j], Y[i, j], 0])
+            MO[:, i, j] = molecular_orbits(C, r)
 
 # =============================================================================
 # Plotting the Molecular Orbits
 # =============================================================================
 
-# define the nuclei positions for plotting and the subplot titles
-R_O1 = np.array([0.0, +1.809 * np.cos(104.52/180.0 * np.pi/2.0), 0.0])
-R_H1 = np.array([-1.809 * np.sin(104.52/180.0 * np.pi/2.0), 0.0, 0.0])
-R_H2 = np.array([+1.809 * np.sin(104.52/180.0 * np.pi/2.0), 0.0, 0.0])
-subplot_titles = ['Oxygen 1s E = {:1.2f}'.format(OE[0]),
-                  'Oxygen 2s E = {:1.2f}'.format(OE[1]),
-                  'Oxygen 2p (x) E = {:1.2f}'.format(OE[2]),
-                  'Oxygen 2p (y) E = {:1.2f}'.format(OE[3]),
-                  'Oxygen 2p (z) E = {:1.2f}'.format(OE[4]),
-                  'Hydrogen 1 1s E = {:1.2f}'.format(OE[5]),
-                  'Hydrogen 2 1s E = {:1.2f}'.format(OE[6])]
+    # define the nuclei positions for plotting and the subplot titles
+    R_O1 = np.array([0.0, +1.809 * np.cos(104.52/180.0 * np.pi/2.0), 0.0])
+    R_H1 = np.array([-1.809 * np.sin(104.52/180.0 * np.pi/2.0), 0.0, 0.0])
+    R_H2 = np.array([+1.809 * np.sin(104.52/180.0 * np.pi/2.0), 0.0, 0.0])
+    subplot_titles = ['Oxygen 1s E = {:1.2f}'.format(OE[0]),
+                      'Oxygen 2s E = {:1.2f}'.format(OE[1]),
+                      'Oxygen 2p (x) E = {:1.2f}'.format(OE[2]),
+                      'Oxygen 2p (y) E = {:1.2f}'.format(OE[3]),
+                      'Oxygen 2p (z) E = {:1.2f}'.format(OE[4]),
+                      'Hydrogen 1 1s E = {:1.2f}'.format(OE[5]),
+                      'Hydrogen 2 1s E = {:1.2f}'.format(OE[6])]
 
-# plot the orbitals using a contour plot
-fig, ax = plt.subplots(2, 4, figsize=(30, 15))
-fig.subplots_adjust(hspace=0.5, wspace=0.5)
-ax = ax.ravel()
+    # plot the orbitals using a contour plot
+    fig, ax = plt.subplots(2, 4, figsize=(30, 15))
+    fig.subplots_adjust(hspace=0.5, wspace=0.5)
+    ax = ax.ravel()
 
-for i in range(n_orbitals):
-    ax[i].plot(R_O1[0], R_O1[1], 'bx', label='Oxygen atom')
-    ax[i].plot(R_H1[0], R_H1[1], 'rx', label='Hydrogen atom')
-    ax[i].plot(R_H2[0], R_H1[1], 'rx')
-    CS = ax[i].contour(X, Y, MO[i, :, :])
-    plt.clabel(CS, ax=ax[i], fontsize=5)
-    ax[i].set_xlabel(r'$x$')
-    ax[i].set_ylabel(r'$y$')
-    ax[i].legend(loc='lower right', prop={'size': 10})
-    ax[i].set_title(subplot_titles[i], fontsize=12)
+    for i in range(n_orbitals):
+        ax[i].plot(R_O1[0], R_O1[1], 'bx', label='Oxygen atom')
+        ax[i].plot(R_H1[0], R_H1[1], 'rx', label='Hydrogen atom')
+        ax[i].plot(R_H2[0], R_H1[1], 'rx')
+        CS = ax[i].contour(X, Y, MO[i, :, :])
+        plt.clabel(CS, ax=ax[i], fontsize=5)
+        ax[i].set_xlabel(r'$x$')
+        ax[i].set_ylabel(r'$y$')
+        ax[i].legend(loc='lower right', prop={'size': 10})
+        ax[i].set_title(subplot_titles[i], fontsize=12)
 
-plt.savefig('orbitals_contour.pdf')
-plt.show()
+    plt.savefig('orbitals_contour.pdf')
+    plt.show()
 
-# plot the orbitals using a colourmap
-fig, ax = plt.subplots(2, 4, figsize=(30, 10))
-fig.subplots_adjust(hspace=0.5, wspace=0.5)
-ax = ax.ravel()
+    # plot the orbitals using a colourmap
+    fig, ax = plt.subplots(2, 4, figsize=(30, 10))
+    fig.subplots_adjust(hspace=0.5, wspace=0.5)
+    ax = ax.ravel()
 
-for i in range(n_orbitals):
-    im = ax[i].imshow(MO[i, :, :], cmap=plt.cm.plasma, aspect='auto',
-                      origin='lower')
-    divider = make_axes_locatable(ax[i])
-    cax = divider.append_axes('right', size='5%', pad=0.5)
-    fig.colorbar(im, cax=cax)
-    ax[i].set_xlabel('x')
-    ax[i].set_ylabel('y')
-    ax[i].axes.xaxis.set_ticklabels([])
-    ax[i].axes.yaxis.set_ticklabels([])
-    ax[i].set_title(subplot_titles[i], fontsize=12)
+    for i in range(n_orbitals):
+        im = ax[i].imshow(MO[i, :, :], cmap=plt.cm.plasma, aspect='auto',
+                          origin='lower')
+        divider = make_axes_locatable(ax[i])
+        cax = divider.append_axes('right', size='5%', pad=0.5)
+        fig.colorbar(im, cax=cax)
+        ax[i].set_xlabel('x')
+        ax[i].set_ylabel('y')
+        ax[i].axes.xaxis.set_ticklabels([])
+        ax[i].axes.yaxis.set_ticklabels([])
+        ax[i].set_title(subplot_titles[i], fontsize=12)
 
-plt.savefig('orbitals_colourmap.pdf')
-plt.show()
+    plt.savefig('orbitals_colourmap.pdf')
+    plt.show()

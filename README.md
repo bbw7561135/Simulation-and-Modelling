@@ -23,11 +23,16 @@ WIP: Simulates the flow of traffic on a multiple-lane road.
 ## Coursework 01 MC
 The submitted Jupyter notebook for the Monte Carlo coursework.
 ## Coursework 01 MD
-The submitted Jupyter notebook for the Molecular Dynamics coursework.
+The submitted Jupyter notebook for the molecular dynamics coursework.
 ## Coursework 02 Agents
 The submitted Jupyter notebook for the agents coursework.
 ## Coursework 02 Finite Elements
-The submitted Jupyter notebook for the finite Elements coursework.
+The submitted Jupyter notebook for the finite elements coursework.
+## Coursework 03 SCF
+The submitted Jupyter notebook for the self consistent fields coursework.
+## Coursework 03 SDE
+The submitted Jupyter notebook for the stochastic differential equations 
+coursework.
 
 # finite-elements
 ## 1d_finite_element_solver
@@ -94,6 +99,8 @@ A simulation of a water molecule using the Hartree-Fock method. The plots of
 the molecular orbits are plotted for the 1s, 2s and 2p orbitals for the oxygen
 and hydrogen atoms. The STO-3G function basis is used to construct the 
 molecular orbitals.
+## test_HF
+Pytest style 'unit tests' for hartree_flock_water.
 
 # stochastic-DEs
 ## brownian_motion
@@ -116,4 +123,5 @@ computing the expected solution.
 ## OU
 Evaluates the Ornstein-Uhlenbeck equation using the Euler-Maruyama method for
 single and multiple realisiations.
-
+## test_SDE
+Pytest style unit tests for ornstein_uhlenbeck_convergence.
