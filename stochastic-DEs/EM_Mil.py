@@ -18,12 +18,12 @@ X0 = 1
 mu = 1
 lamda = 2
 t_end = 1
-N = int(2 ** 10)
-M = int(10e3)
+N = 2 ** 10
+M = 10 ** 3
 ratios = 2 ** np.arange(7)
 
 # define a seed for reproducible solutions
-np.random.seed(100)
+#np.random.seed(100)
 
 
 def exact_sol(t, W):

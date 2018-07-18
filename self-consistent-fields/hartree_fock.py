@@ -184,7 +184,7 @@ def HF_iteration(S, H, G, C, Vnn, n_electrons, tol=1e-6):
     if (diff < tol):
         F = flock_matrix(H, G, D)
         energy = total_energy(D, H, F, Vnn)
-        print('Total energy: {:3.3f}\nIterations: {}'
+        print('Total energy: {}\nIterations: {}'
               .format(energy, current_iteration))
 
         return energy, C

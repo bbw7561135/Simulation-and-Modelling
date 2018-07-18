@@ -24,13 +24,13 @@ def E(n):
 
     h = 2 * np.pi
     E = h ** 2/(8 * np.pi) * np.sum(n ** 2)
-    
+
     return E
 
 
 def metropolis_hastings(states, n_steps, n_particles=100, beta=0.1):
     """
-    Applies the Metropolis-Hastings algorithm to evolve a box towards its 
+    Applies the Metropolis-Hastings algorithm to evolve a box towards its
     ground state energy.
 
     Parameters
@@ -47,7 +47,7 @@ def metropolis_hastings(states, n_steps, n_particles=100, beta=0.1):
     Returns
     -------
     energy_output: n_steps x 2 array of floats.
-        Column 0 contains the energy of the sytem at each time step and column 
+        Column 0 contains the energy of the sytem at each time step and column
         2 contains the value of time at that timestep.
     """
 

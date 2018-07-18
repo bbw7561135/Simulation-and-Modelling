@@ -1,127 +1,31 @@
-# agents
-## bird_flock
-Simulates bird's flocking together. The code achieves this by minimising the
-negative of a utility function to compute a new heading and velocity for a
-bird due to the flockmates it can see.
-## conway_game_of_life
-Creates an animation of Conway's Game of Life. Currently there are only two
-masks to use in the grid. More will eventually be implemented when I have
-the time to do it.
-## flock_training
-Based on the bird_flock code. This code uses a blackbox minimiser to find the
-optimum value of the cohesion parameter *C* for a flock of birds described by
-a utility function. The optimum value of C is found by training a flock of 4
-boids. The variance in the average width of the flock is then minimised by
-finding the optimum value of C. This value of C is then used to simulate a flock
-of 50 randomly placed boids.
-## test_flock_training
-Pytest style unit tests for the functions in flock_training.
-## traffic_flow
-WIP: Simulates the flow of traffic on a multiple-lane road.
+# Simulation and Modelling
 
-# assignment-notebooks
-## Coursework 01 MC
-The submitted Jupyter notebook for the Monte Carlo coursework.
-## Coursework 01 MD
-The submitted Jupyter notebook for the molecular dynamics coursework.
-## Coursework 02 Agents
-The submitted Jupyter notebook for the agents coursework.
-## Coursework 02 Finite Elements
-The submitted Jupyter notebook for the finite elements coursework.
-## Coursework 03 SCF
-The submitted Jupyter notebook for the self consistent fields coursework.
-## Coursework 03 SDE
-The submitted Jupyter notebook for the stochastic differential equations 
-coursework.
+Python scripts developed as part of the FEEG6016 Simulation and Modelling module at the University of Southampton.
 
-# finite-elements
-## 1d_finite_element_solver
-Computes the temperature of a 1D system using finite element methods.
-## 2d_finite_element_solver
-Computes the temperature of a 2D system using finite element methods given the
-node locations, IEN and ID arrays for a mesh and heat source function.
-## big_g
-An application of 2d-finite-element-solver to solve for the temperature of a
-g shaped grid. The boundary conditions of the grid set the right side of the
-grid to a fixed temperature of T = 0. At all other boundaries, the normal
-derivative of the temperature vanishes.
-## test_big_g
-Pytest style tests for big_g.
+## Agents
 
-# molecular-dynamics
-## co_molecule
-Simulates the interactions of the atoms in a CO molecule using the Morse and the
-Kratzer potential. The code needs to be generalised further and then have a
-harmonic potential implemented correctly.
-## molecular_dynamics_basics
-Simulation of particles interacting through the Lennard-Jones
-potential. The particles are contained inside a box with periodic boundary
-conditions and are evolved in time using a Verlet integrator.
-## n_water_molecules
-A generalisation of the water_molecule code for multiple water molecules. The
-molecules are contained in a box with periodic boundary conditions where they
-experience an internal and external force. The internal force between the atoms
-in a molecule is similar to the strong nuclear force potential. The external
-force is between all atoms, except atoms of the same molecule, and is a
-combination of a Coulomb and Lennard-Jones interaction between the particles.
-The molecules are evolved in time using a Verlet integrator.
-## water_molecule
-Simulation of a water molecule using a potential between the three atoms in the
-molecule. The potential is similar to the strong nuclear force potential and is
-used to generate a force function using Sympy to symbolically manipulate and
-differentiate the potential function.
+Examples of cellular automata and agent based simulation techniques. Includes Conway's Game of Life and a simulations of a single lane road and a flock of birds.
 
-# monte-carlo
-## ising_model
-Simulation of a system of spins using the Ising model. The system is a 2D square
-lattice evolved in time by using the Metropolis-Hasting algorithm to randomly
-sample the system using Monte Carlo techniques. The code attempts to find an
-equilibrium state of the system at varying grid sizes and temperatures before
-it calculates the final magnetisation of the system.
-## lennard_jones_fluid
-WIP: Simulates a gas using the Lennard-Jones potential. Calculates the pressure
-of the gas after being evolved in time in the NVT ensemble.
-## mc_int
-An n-dimensional generalisation of mc_int_circle_sphere to calculate the volume
-of an n-dimensional hypersphere using Monte Carlo integration.
-## mc_int_circle_sphere
-Calculates the area and volume of a sphere using Monte Carlo integration.
-## metropolis-hastings
-An application of the Metropolis-Hasting algorithm to calculate the ground
-state energy of particles in a box.
+## Assignment Notebooks
 
-# self-consistent-fields
-## hartree_fock
-A simulation of a H-H+ molecule using the Hartree-Fock method. The energy
-of the molecule is printed to screen.
-## hartree_fock_water
-A simulation of a water molecule using the Hartree-Fock method. The plots of
-the molecular orbits are plotted for the 1s, 2s and 2p orbitals for the oxygen
-and hydrogen atoms. The STO-3G function basis is used to construct the 
-molecular orbitals.
-## test_HF
-Pytest style 'unit tests' for hartree_flock_water.
+Jupyter notebooks of submitted coursework.
 
-# stochastic-DEs
-## brownian_motion
-Evaluates a function with a Brownian noise term over N different paths and M
-different realisations, where N, M = [500, 1000, 2000].
-## EM_Mil
-Evaluates an SDE using the Eular-Maruyama and Milstein methods. The code
-compares both solutions against the exact solution on the same plot and also
-compares the code execution time.
-## ornstein_uhlenbeck_convergence
-The Ornstein-Uhlenbeck equation is solved using the Euler-Maruyama method
-and the theta method. The weak convergence of each method is tested. The 
-methods are tested by plotting a histogram of the results at one point for
-many realisations. The late time solution is compared to the expected late
-solution. The E-M method is expected to have a weak convergence of 1 (this 
-result can be improved by increasing the amount of realisations) and the
-Theta method is expected to have no convergence. Both the histogram and late
-time result solutions show that both methods are sampling correctly and 
-computing the expected solution.
-## OU
-Evaluates the Ornstein-Uhlenbeck equation using the Euler-Maruyama method for
-single and multiple realisiations.
-## test_SDE
-Pytest style unit tests for ornstein_uhlenbeck_convergence.
+## Finite Element
+
+Example of 1D and 2D finite element algorithms used to solve the heat equation.
+
+## Molecular Dynamics
+
+Examples of using Newton's law to simulate the dynamics of molecules with different potential energy functions.
+
+## Monte Carlo
+
+Examples of basic Monte Carlo integration algorithms and Monte Carlo Markov Chain algorithms. The Metropolis algorithm is used to solve the Ising Model for a simple 2D system.
+
+## Self Consistent Fields
+
+The Hartree-Fock method to solve a self consistent field system. Used to calculate the (incorrect) molecular orbits of a water molecule.
+
+## Stochastic Differential Equations
+
+Examples of algorithms used to solve stochastic differential equations. Particular focus is placed on the Euler-Maruyama and Ornstein-Uhlenbeck methods.
