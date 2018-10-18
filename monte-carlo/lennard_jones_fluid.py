@@ -1,292 +1,180 @@
-# =========================================================================== #
-#  Markov Chain Monte Carlo using the Metropolis Hastings algorithm           #
-# to simulate a Lennard-Jones fluid in the NVT ensemble.                      #
-#                                                                             #
-# Written by Edward Parkinson                                                 #
-# Email: e.j.parkinson@soton.ac.uk                                            #
-# =========================================================================== #
-
-import matplotlib.pyplot as plt
+import datetime
 import numpy as np
+from numba import jit
+from matplotlib import pyplot as plt
+
+# Define Global constants
+n_particles = 50
+n_steps = 50000
+epsilon = 1.0
+sigma = 1.0
+delta = 0.04
+density = 1.0
+L = (n_particles / density) ** (1/3)
+rc = L / 2
+dL = delta * L
+temp = 2.0
+beta = 1 / temp
+out_freq = n_steps / 10
 
 
-# =========================================================================== #
-#                           Simulation Parameters                             #
-# =========================================================================== #
-
-
-n_steps = 10000
-n_particles = 100
-a = 1
-density = a/10
-temperature = 2
-beta = 1/temperature
-pressure_term = density/beta
-epsilon = 1
-sigma = 1
-L = (n_particles/density) ** (1/3)
-volume = L ** 3
-halfL = L/2
-r_c = halfL ** 2
-
-
-# =========================================================================== #
-#                               Functions                                     #
-# =========================================================================== #
-
-
-def LJ_potential(r_sq, r_c):
+def compute_lj_potential(rsq, rcsq):
     """
-    Returns the value of the Lennard-Jones potential
-    for values of r. Returns 0 for cut off value r > r_c (minimum image
-    convention). Epsilon and sigma are scaling parameters.
-    Uses (1/r) ** 6 and (1/r) ** 3 as r is squared already.
+    Return the Lennard Jones potential for a given r squared value and r cutoff value
+    """
+    LJ_U = np.where(rsq < rcsq, 4 * epsilon * ((sigma ** 2 / rsq) ** 6 - (sigma ** 2 / rsq) ** 3), 0)
+
+    return LJ_U
+
+
+def compute_lj_force(rsq, rcsq):
+    """
+    Return the Lennard Jones force for a given r square value and r cutoff value
     """
 
-    U = np.where(r_sq <= r_c, 4 * epsilon * ((sigma/r_sq) ** (6) -
-                                             (sigma/r_sq) ** (3)), 0 * r_sq)
+    LJ_F = np.where(rsq < rcsq, 24 * (2 / rsq ** 7 - 1 / rsq ** 4), 0)
 
-    return U
+    return LJ_F
 
-
-def LJ_force(r_sq, r_c):
+def dx_particles(particles, pIdx):
     """
-    Calculate the force between two particles. Returns F if r_sq < r_c and
-    will return 0 otherwise.
+    Compute the separation of all particles for particle p
     """
 
-    F = np.where(r_sq < r_c, 24 * (2 * (1/r_sq ** 7) - (1/r_sq ** 4)) *
-                 np.sqrt(r_sq), 0 * r_sq)
+    dx = particles - particles[pIdx, :]
+    # As we are using periodic boundary conditions, if any particles |dx| > L/2, there is a closer mirror particle
+    # np.sign returns an indication if a number if negative or not, i.e. if dx < 0, then np.sign(dx) == -1
+    dx[np.abs(dx) > L/2] -= np.sign(dx[np.abs(dx) > L/2]) * L
 
-    return F
+    return dx
 
 
-def LJ_potential_test():
+def move_rand_particle(particles, lj_pot):
     """
-    Function to test that the Lennard-Jones potential is being calculated
-    correctly. Returns nothing if no errors are encountered.
-    """
-
-    # test that for r < 1, U >= 0
-    x = np.linspace(0.8, 1.0)
-    assert(np.all(LJ_potential(x, 1)) >= 0)
-
-    # test that for r > 1, U <= 0
-    x = np.linspace(1, 2, 100)
-    assert(np.all(LJ_potential(x, 2.1) <= 0))
-
-    # test that at r = 1, U(r) = 0
-    assert(np.allclose(LJ_potential(1, 1), 0))
-
-    # test that the cutoff is working correctly. If r > r_c, U will return
-    # 0. Thus, expecting 0 from this
-    assert(np.allclose(LJ_potential(0.75, 0.5), 0))
-
-    # test that it is negative for a point, r = 1.4
-    assert(LJ_potential(1.4, 1.6) < 0)
-
-    # test that it is postive for a point, r = 0.4
-    assert(LJ_potential(0.4, 1.2) > 0)
-
-
-def plot_potential():
-    """
-    Plots the Lennard-Jones potential with no scaling factors to show
-    the shape of the potential. Run by using plot_potential(LJ_potential).
-    """
-    x = np.linspace(0.5, 2, 200)
-    y = LJ_potential(x, 2)
-
-    plt.figure(figsize=((15, 8)))
-    plt.xlim((0.8, 2)), plt.ylim((-2, 2))
-    plt.xlabel('Radius, r'), plt.ylabel('U(r)')
-    plt.grid(True, which='both')
-    plt.plot(x, y, 'r-')
-    plt.show()
-
-
-def separation(target, none_target):
-    """
-    Calculate the value the separation, i.e r ** 2 = dx ** 2 + dy ** 2 +
-    dz ** 2,  between two particles.
+    Given the potential between particles, move the particles
     """
 
-    # size = 3 used for total system energy calculation
-    if np.size(none_target) == 3:
-        difference = none_target - target
-        differece_sq = np.square(difference)
-        r_squared = np.sum(differece_sq)
-    # used for particle - system of particle
-    else:
-        difference = none_target - target  # line below removes the zero entry
-        difference_no_zero = difference[np.all(difference != 0, axis=1)]
-        differece_sq = np.square(difference_no_zero)
-        r_squared = np.sum(differece_sq, axis=1)
+    # Make a copy of arrays because Python
+    particles_new = particles.copy()
+    lj_pot_new = lj_pot.copy()
 
-#    r_squared[np.abs(r_squared) > r_c] -= np.sign(r_squared[np.abs(r_squared) > r_c]) * L
+    # Pick a random particle and move it slightly
+    pIdx = np.random.randint(n_particles)
+    particles_new[pIdx, :] += dL * np.random.rand(3)
+    dx = dx_particles(particles_new, pIdx)
 
-    return r_squared
+    dU = 0.0
+    for i in range(pIdx):
+        rsq = np.dot(dx[i, :], dx[i, :])
+        lj_pot_new[i, pIdx] = compute_lj_potential(rsq, rc ** 2)
+        dU = lj_pot_new[i, pIdx] - lj_pot[i, pIdx]
+    for i in range(pIdx + 1, n_particles):
+        rsq = np.dot(dx[i, :], dx[i, :])
+        lj_pot_new[i, pIdx] = compute_lj_potential(rsq, rc ** 2)
+        dU = lj_pot_new[i, pIdx] - lj_pot[i, pIdx]
+
+    return particles_new, lj_pot_new, dU
 
 
-def total_system_energy_force(system):
+def compute_pressure(particles):
     """
-    Calculate the total energy of the system by looking at the iteractions
-    each particle has with the other particles.
+    Compute the pressure of the current particle configuration
     """
 
-    energy = 0
-#    force = 0
+    pressure_tail = 16 / 3 * np.pi * density ** 2 * (2 - rc ** (-9) / 3 - rc ** (-3))
+    pressure = pressure_tail + density / beta
     for i in range(n_particles):
-        for j in range(i+1, n_particles):
-            r_sq = separation(system[i], system[j])
-            energy += LJ_potential(r_sq, r_c)
-#            force += np.dot(LJ_force(r_sq, r_c), np.sqrt(r_sq))
+        dx = dx_particles(particles, i)
+        for j in range(i + 1, n_particles):
+            rsq = np.dot(dx[j, :], dx[j, :])
+            pressure += compute_lj_force(rsq, rc ** 2) / L ** 3
 
-    return energy#, force
+    return pressure
 
 
-def pair_energy_force(particle1, particle2):
+def initial_energy(particles, lj_pot, energy):
     """
-    Calculate the energy between two particles.
-    """
-
-    r_sq = separation(particle1, particle2)
-    energy = np.sum(LJ_potential(r_sq, r_c))
-#    force = np.sum(LJ_force(r_sq, r_c))
-
-    return energy#, force
-
-
-def periodic_boundary(particle):
-    """
-    Apply periodic boundary conditions to a particle
+    Calculate the initial potential energy of the system
     """
 
-    periodic_particle = np.where(particle > L, particle - L, particle)
-    periodic_particle = np.where(particle < 0, particle + L, particle)
+    for i in range(n_particles):
+        dx = dx_particles(particles, i)
+        for j in range(i):
+            rsq = np.dot(dx[j, :], dx[j, :])
+            lj_pot[j, i] = compute_lj_potential(rsq, rc ** 2)
+        for j in range(i + 1, n_particles):
+            rsq = np.dot(dx[j, :], dx[j, :])
+            lj_pot[j, i] = compute_lj_potential(rsq, rc ** 2)
 
-    return periodic_particle
+    energy[0] = np.sum(lj_pot)
+
+    return particles, lj_pot, energy
 
 
-def probabilty_check(E_1, E_2):
+@jit  # Let's jit this shit
+def mcmc(particles, lj_pot, energy):
     """
-    Calculates the Boltzmann probabilty for a transition from E1 to E2
-    """
-
-    probabilty_check = np.exp(-beta * (E_2 - E_1))
-    MH_check = np.random.uniform(0, 1)
-
-    if MH_check < probabilty_check:
-        return 1
-
-
-def energy_tail_correction():
-    """
-    Compute the energy tail correction when r > r_c.
+    Monte Carlo Markov Chain iterations using the Metropolis Hastings algorithm
     """
 
-    correction = ((8 * np.pi * density)/3) * ((1/3) * (1/r_c ** 4.5) -
-                                              (1/r_c ** 1.5))
+    for step in range(1, n_steps + 1):
+        particles_new, lj_pot_new, dU = move_rand_particle(particles, lj_pot)
+        if dU < 0.0 or np.random.rand() < np.exp(-beta * dU):
+            particles = particles_new
+            lj_pot = lj_pot_new
+            energy[step] = energy[step - 1] + dU
+        else:
+            energy[step] = energy[step - 1]
 
-    return correction
+        if step % out_freq == 0:
+            print("{} steps out of {} completed ({}%)".format(step, n_steps, step / n_steps * 100))
+
+    return particles, lj_pot, energy
 
 
-def pressure_tail_correction():
+def main():
     """
-    Compute the pressure tail corretion when r > r_c.
-    """
-
-    correction = ((16 * np.pi * density ** 2)/3) * ((2/3) * (1/r_c ** 4.5) -
-                                                    (1/r_c ** 1.5))
-
-    return correction
-
-
-def plot_energy(energy_array):
-    """
-    Plots the energy of the system. The function will only graph only
-    values from the graph_from variable onwards in the array.
+    The main steering function of the script
     """
 
-    plot_from = 5000
+    print("\nBeginning simulation: current date and time {}\n".format(datetime.datetime.now()))
 
-    plt.figure(figsize=(15, 8))
-    plt.plot(energy_array[plot_from:, 0], energy_array[plot_from:, 1], 'r-')
-#    plt.semilogy(energy_array[plot_from:, 1], 'r-')
-    plt.xlabel('Number of steps, n_steps'), plt.ylabel('Energy, U')
-    plt.savefig('Lennard-Johnson_Energy.pdf')
+    # Initialise the particles, potential and energy array
+    particles = np.random.rand(n_particles, 3) * L
+    lj_pot = np.zeros((n_particles, n_particles))
+    energy = np.zeros(n_steps + 1)
+
+    # Calculate the initial energies and then do the MCMC iterations and *hopefully* converge
+    particles, lj_pot, energy = initial_energy(particles, lj_pot, energy)
+    particles, lj_pot, energy = mcmc(particles, lj_pot, energy)
+    pressure = compute_pressure(particles)
+
+    return particles, lj_pot, energy, pressure
+
+
+if __name__ == "__main__":
+    n_steps = 50000
+    n_particles = 100
+
+    paticles, lj_pot, energy, pressure = main()
+
+    # Output some "useful" data
+    energy_min = np.min(energy)
+    energy_max = np.max(energy)
+
+    print("\n----------\n")
+    print("Minimum energy value:      {:1.4e}".format(energy_min))
+    print("Maximum energy value:      {:1.4e}".format(energy_max))
+    print("Energy of final system:    {:1.4e}".format(energy[-1]))
+    print("Pressure exerted on box:   {:1.4e}".format(pressure))
+    print("\n----------\n")
+
+    # Plot the energy against time step
+    fig, ax = plt.subplots()
+    steps = np.arange(0, n_steps)
+    energy_plot = energy - energy_min
+    ax.semilogy(steps, energy_plot[1:])
+    ax.set_xlabel("Step")
+    ax.set_ylabel(r"Normalised Energy, $E - E_{min}$")
+    ax.set_xlim(0, n_steps)
     plt.show()
-
-    plt.figure(figsize=(10, 10))
-    plt.hist(energy_array[plot_from:, 1], bins=50, edgecolor='black',
-             linewidth=1.0, normed=True)
-    plt.xlabel('Energy, U')
-    plt.ylabel('Frequency')
-    plt.savefig('Lennard-Johnson_Energy_histogram.pdf')
-    plt.show()
-
-
-# =========================================================================== #
-#                            Monte Carlo Sampling                             #
-# =========================================================================== #
-
-
-# test that the function LJ_potential() is still working correctly
-LJ_potential_test()
-
-# initialise the box of particles
-particles = L * np.random.rand(n_particles, 3)
-system_energy, system_force = total_system_energy_force(particles)
-system_pressure = pressure_term + system_force/volume
-energy_correction = energy_tail_correction()
-pressure_correction = pressure_tail_correction()
-
-output_array = np.zeros((n_steps+1, 3))
-output_array[0][0] = 0
-output_array[0][1] = system_energy + energy_correction
-output_array[0][2] = system_pressure + pressure_correction
-
-n = 0
-accept = 0
-for step in range(n_steps):
-
-    n += 1
-
-    # random variables for the target particle to perturb
-    target_index = np.random.randint(n_particles)
-    rand_direction = np.random.randint(3)
-    rand_pert = np.random.uniform(-1, 1)
-
-    target_particle = np.copy(particles[target_index])
-    initial_energy, initial_force = pair_energy_force(
-            target_particle, particles)
-    target_particle[rand_direction] += rand_pert
-    target_particle = periodic_boundary(target_particle)
-    perturbed_energy, perturbed_force = pair_energy_force(
-            target_particle, particles)
-
-    if perturbed_energy < initial_energy:
-        particles[target_index] = target_particle
-        system_energy += (perturbed_energy - initial_energy)
-        system_force += (perturbed_force - initial_force)
-    else:
-        transition_probabilty = probabilty_check(initial_energy,
-                                                 perturbed_energy)
-        if transition_probabilty == 1:
-            particles[target_index] = target_particle
-            system_energy += (perturbed_energy - initial_energy)
-            system_force += (perturbed_force - initial_force)
-            accept += 1
-
-    system_pressure = pressure_term + system_force/volume
-
-    energy_correction = energy_tail_correction()
-    pressure_correction = pressure_tail_correction()
-
-    output_array[step+1][0] = n
-    output_array[step+1][1] = system_energy + energy_correction
-    output_array[step+1][2] = system_pressure + pressure_correction
-
-plot_energy(output_array)
-print('Acceptance rate: {}%'.format((accept/n_steps) * 100))
-print('Final pressure: {}'.format(output_array[n_steps][2]))

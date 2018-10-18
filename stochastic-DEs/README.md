@@ -17,4 +17,5 @@ The Ornstein-Uhlenbeck equation is solved using the Euler-Maruyama method and th
 Evaluates the Ornstein-Uhlenbeck equation using the Euler-Maruyama method for single and multiple realisiations.
 
 ## test_SDE
+
 Pytest style unit tests for ornstein_uhlenbeck_convergence.
