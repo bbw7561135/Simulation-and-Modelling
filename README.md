@@ -29,3 +29,8 @@ The Hartree-Fock method to solve a self consistent field system. Used to calcula
 ## Stochastic Differential Equations
 
 Examples of algorithms used to solve stochastic differential equations. Particular focus is placed on the Euler-Maruyama and Ornstein-Uhlenbeck methods.
+
+
+## Acknowledgements 
+
+I would like to acknowledge financial support from the EPSRC Centre for Doctoral Training in Next Generation Computational Modelleing grant EP/L015382/1.
